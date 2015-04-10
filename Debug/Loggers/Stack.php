@@ -18,20 +18,26 @@ class Stack implements \Materia\Debug\Logger {
      * Append a new logger to the list of active loggers
      *
      * @param   \Materia\Debug\Logger   $logger
+     * @return  $this
      **/
     public final function addLogger( \Materia\Debug\Logger $logger ) {
         if( !in_array( $logger, $this->loggers ) )
             $this->loggers[]     =  $logger;
+
+        return $this;
     }
 
     /**
      * Remove a logger from the list of active loggers
      *
      * @param   \Materia\Debug\Logger   $logger
+     * @return  $this
      **/
     public final function removeLogger( \Materia\Debug\Logger $logger ) {
         if( $key = array_search( $logger, $this->loggers ) )
             unset( $this->loggers[$key];
+
+        return $this;
     }
 
     /**
@@ -41,12 +47,15 @@ class Stack implements \Materia\Debug\Logger {
         foreach( $this->loggers as $logger ) {
             call_user_func_array( array( $logger, 'logMessage' ), func_get_args() );
         }
+
+        return $this;
     }
 
     /**
      * @see IteratorAggregate::getIterator()
      **/
     public function getIterator() {
-        return new ArrayIterator( $this->loggers );
+        return new \ArrayIterator( $this->loggers );
     }
+
 }
