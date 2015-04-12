@@ -10,7 +10,7 @@ namespace Materia\Data\Superglobals;
  * @link    http://lab.alchemica.it/materia/
  **/
 
-class Session implements \Materia\Security\Superglobal {
+class Session implements \Materia\Data\Superglobal {
 
 	protected $data		 =	array();
 	protected $valid	 =	array();
