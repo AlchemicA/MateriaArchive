@@ -140,7 +140,7 @@ class Request {
 	 * @return	$this
 	 **/
 	public function setMethod( $method ) {
-		if( in_array( $method, array( 'GET', 'POST', 'PUT', 'DELETE', 'PATCH' ) ) )
+		if( in_array( $method, array( 'GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS' ) ) )
 			$this->method	 =	$method;
 
 		return $this;
