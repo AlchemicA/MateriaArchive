@@ -23,8 +23,17 @@ class Route {
      * @return  $this
      **/
     public function setController( $pattern, $controller ) {
+        if( !is_string( $pattern ) )
+            throw new \InvalidArgumentException( sprintf( 'Argument 1 passed to %s must be a string, %s given', __METHOD__, gettype( $controller ) ) );
+
+        if( !is_string( $controller ) )
+            throw new \InvalidArgumentException( sprintf( 'Argument 2 passed to %s must be a string, %s given', __METHOD__, gettype( $controller ) ) );
+
         $controller  =  new \ReflectionClass( $controller );
         $resources   =  $controller->getMethods();
+
+        if( !$controller->implementsInterface( '\Materia\Core\Controller' ) )
+            throw new \InvalidArgumentException( sprintf( 'Argument 2 passed to %s must implements \Materia\Core\Controller interface', __METHOD__ ) );
 
         // Parse allowed request methods
         if( strpos( $pattern, ' ' ) !== FALSE ) {
@@ -49,15 +58,17 @@ class Route {
 
                     foreach( $params as $param ) {
                         if( $param->isOptional() )
-                            $this->setResource( $methods, '/^' . implode( '\/', $args ) . '$/i', $resource );
+                            $this->setResource( $methods, '/^\/' . implode( '\/', $args ) . '$/i', $resource );
 
                         $args[]  =  "(?P<{$param->name}>[^(\/|\?)]+)";
                     }
                 }
 
-                $this->setResource( $methods, '/^' . implode( '\/', $args ) . '$/i', $resource );
+                $this->setResource( $methods, '/^\/' . implode( '\/', $args ) . '$/i', $resource );
             }
         }
+
+        return $this;
     }
 
     /**
@@ -68,7 +79,7 @@ class Route {
      * @param   ReflectionMethod    $resource   ReflectionMethod instance
      * @return  $this
      **/
-    protected function setResource( $methods, $pattern, /ReflectionMethod $resource ) {
+    protected function setResource( $methods, $pattern, \ReflectionMethod $resource ) {
         $this->resources[]   =  $resource;
 
         end( $this->resources );
@@ -117,13 +128,15 @@ class Route {
      * @return  mixed
      **/
     public function process( Request &$request, \Materia\Core\Container &$container ) {
-        if( !isset( $this->routes[$request->method] ) )
+        $params  =  array();
+        $method  =  $request->getMethod();
+        $path    =  $request->getPath();
+
+        if( !isset( $this->routes[$method] ) )
             return FALSE;
 
-        $params  =  array();
-
         // Sort routes by length first, then alphabetically
-        usort( $this->routes[$request->method], function( $a, $b ) {
+        usort( $this->routes[$method], function( $a, $b ) {
             $la  =  strlen( $a );
             $lb  =  strlen( $b );
 
@@ -134,12 +147,13 @@ class Route {
             return $la - $lb;
         });
 
-        foreach( $this->routes[$request->method] as $key => $pattern ) {
-            if( preg_match( $pattern, $request->url, $matches ) ) {
+        foreach( $this->routes[$method] as $key => $pattern ) {
+            if( preg_match( $pattern, $path, $matches ) ) {
                 $class   =  new \ReflectionClass( $this->resources[$key]->class );
-                $args    =  array();
 
                 if( $constructor = $class->getConstructor() ) {
+                    $args    =  array();
+
                     foreach( $constructor->getParameters() as $parameter ) {
                         if( $parameter->getClass()->name ) {
                             $args[]  =& $container->{$parameter->name};
@@ -155,13 +169,13 @@ class Route {
                 $args    =  array();
 
                 foreach( $this->resources[$key]->getParameters() as $parameter ) {
-                    if( $parameter->name ) {
+                    if( $parameter->name && isset( $matches[$parameter->name] ) ) {
                         $pos         =  $parameter->getPosition();
                         $args[$pos]  =  $matches[$parameter->name];
                     }
                 }
 
-                return $this->resources[$key]->invokeWithArgs( $instance, $args );
+                return $this->resources[$key]->invokeArgs( $instance, $args );
             }
         }
 

@@ -92,7 +92,7 @@ class String implements \Materia\Data\Validator {
             }
         }
 
-        return $default;
+        return TRUE;
     }
 
     /**

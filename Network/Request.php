@@ -47,6 +47,16 @@ class Request {
 			if( isset( $_SERVER['SERVER_PORT'] ) )
 				$this->setPort( $_SERVER['SERVER_PORT'] );
 
+			if( isset( $_SERVER['REQUEST_URI'] ) ) {
+				$script	 =	str_replace( '\\', '/', $_SERVER['SCRIPT_NAME'] );
+				$pos	 =	$script ? strpos( $_SERVER['REQUEST_URI'], $script ) : FALSE;
+
+				if( $pos === 0 )
+					$this->setPath( substr( $_SERVER['REQUEST_URI'], strlen( $script ) ) );
+				else
+					$this->setPath( $_SERVER['REQUEST_URI'] );
+			}
+
 			if( isset( $_SERVER['QUERY_STRING'] ) )
 				$this->setQuery( $_SERVER['QUERY_STRING'] );
 

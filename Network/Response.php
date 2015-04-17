@@ -86,7 +86,7 @@ class Response {
 			// 	header( ( $_SERVER['SERVER_PROTOCOL'] ? '' : 'HTTP/1.1 ' ) . static::$codes[$code], TRUE, $code );
 		}
 		else {
-			throw new InvalidArgumentException( 'Invalid status code' );
+			throw new \InvalidArgumentException( 'Invalid status code' );
 		}
 
 		return $this;
@@ -185,7 +185,7 @@ class Response {
 	 * @param	mixed	$expires	expiration time
 	 * @return	$this
 	 **/
-	public function cache( $expires ) {
+	public function setCache( $expires ) {
 		if( $expires === FALSE ) {
 			$this->headers['Expires']        =  'Mon, 26 Jul 1997 05:00:00 GMT';
 			$this->headers['Cache-Control']  =  array(

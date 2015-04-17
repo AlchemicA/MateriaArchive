@@ -64,7 +64,7 @@ class Number implements \Materia\Data\Validator {
             }
         }
 
-        return $default;
+        return TRUE;
     }
 
     /**
