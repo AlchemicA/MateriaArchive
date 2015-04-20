@@ -13,6 +13,7 @@ namespace Materia\Filesystem;
 class Loader {
 
     protected $chroot;
+    protected $loader;
 
     protected $files     =  array();
     protected $debug     =  array();
@@ -110,59 +111,72 @@ class Loader {
     /**
      * Load a specific file
      *
-     * @param   string  $filename   filen name
+     * @param   string  $filename   file name
      * @return  string
      **/
     public function load( $filename ) {
         if( !is_string( $filename ) )
             return;
 
-        if( isset( $this->logger ) )
-            $this->logger->logMessage( \Materia\Debug\Logger::INFO, "Loading {$filename}" );
+        $this->logMessage( "Loading {$filename}" );
 
-        // is an explicit file noted?
+        // Clean-up Namespace prefix
+        $filename    =  trim( $filename, '\\' );
+
+        // Load explicit file
         if( isset( $this->files[$filename] ) ) {
-            $file    =  $this->files[$filename];
+            if( FALSE !== ( $data = $this->loadFile( $this->files[$filename] ) ) ) {
+                $this->logMessage( "Loaded from explicit: {$this->files[$filename]}" );
 
-            if( $this->requireFile( $file ) ) {
-                if( isset( $this->logger ) )
-                    $this->logger->logMessage( \Materia\Debug\Logger::INFO, "Loaded from explicit: {$file}" );
+                $this->loaded[]  =  $this->files[$filename];
 
-                $this->loaded[$filename]     =  $file;
-
-                return TRUE;
+                return $data;
             }
         }
 
-        // the current namespace prefix
-        $prefix  =  '\\' . trim( $filename, '\\' );
+        $chunks      =  explode( '\\', $filename );
+        $filename    =  array_pop( $chunks );
+        $count       =  count( $chunks );
 
-        // work backwards through the namespace names of the fully-qualified
-        // class name to find a mapped file name
-        while( FALSE !== ( $pos = strrpos( $prefix, '\\' ) ) ) {
-            // retain the trailing namespace separator in the prefix
-            $prefix  =  substr( $prefix, 0, ( $pos + 1 ) );
+        // Work backwards through the namespace names
+        for( $i = 0; $i <= $count; $i++ ) {
+            // Retain the trailing namespace separator in the prefix
+            $prefix  =  implode( '\\', array_slice( $chunks, ( 0 - $count ), ( $count - $i ) ) ) . '\\';
 
-            // try to load a mapped file for the prefix and relative class
-            if( $file = $this->loadFile( $prefix, substr( $filename, $pos ) ) ) {
-                if( isset( $this->logger ) )
-                    $this->logger->logMessage( \Materia\Debug\Logger::INFO, "Loaded from {$prefix}: {$file}" );
+            // Try to load a mapped file for the prefix
+            if( isset( $this->paths[$prefix] ) ) {
+                foreach( $this->paths[$prefix] as $path ) {
+                    $file    =  $path . DIRECTORY_SEPARATOR . implode( DIRECTORY_SEPARATOR, $chunks ) . DIRECTORY_SEPARATOR . $filename;
 
-                $this->loaded[$filename]     =  $file;
+                    // If the mapped file exists, load it
+                    if( FALSE !== ( $data = $this->loadFile( $file ) ) ) {
+                        // Yes, we're done
+                        return $data;
+                    }
 
-                return TRUE;
+                    // Not in the base directory
+                    $this->logMessage( "{$prefix}: {$file} not found" );
+                }
             }
-
-            // remove the trailing namespace separator for the next iteration of strrpos()
-            $prefix  =  rtrim( $prefix, '\\' );
         }
 
-        // did not find a file for the class
-        if( isset( $this->logger ) )
-            $this->logger->logMessage( \Materia\Debug\Logger::INFO, "{$filename} not loaded" );
+        // Did not find a file for the class
+        $this->logMessage( "{$filename} not loaded" );
 
-        throw new \Exception( "{$filename} not found" );
+        return FALSE;
+    }
 
+    /**
+     * Load the mapped file
+     *
+     * @param   string  $file       the full path to file
+     * @return  mixed               FALSE if the file can't be loaded, or the file content
+     **/
+    protected function loadFile( $file ) {
+        if( file_exists( $file ) && is_readable( $file ) )
+            return file_get_contents( $file );
+
+        // Not found
         return FALSE;
     }
 
@@ -176,6 +190,16 @@ class Loader {
         $this->logger    =  $logger;
 
         return $this;
+    }
+
+    /**
+     * Log a message onto logger
+     *
+     * @see \Materia\Debug\Logger::setMessage()
+     **/
+    public function logMessage( $message, array $params = array() ) {
+        if( isset( $this->logger ) )
+            $this->logger->logMessage( \Materia\Debug\Logger::INFO, $message, $params );
     }
 
     /**

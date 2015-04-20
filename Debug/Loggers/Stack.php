@@ -10,7 +10,7 @@ namespace Materia\Debug\Loggers;
  * @link    http://lab.alchemica.it/materia/
  **/
 
-class Stack implements \Materia\Debug\Logger {
+class Stack implements \IteratorAggregate, \Materia\Debug\Logger {
 
     private $loggers     =  array();
 

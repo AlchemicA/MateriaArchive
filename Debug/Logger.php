@@ -10,7 +10,7 @@ namespace Materia\Debug;
  * @link    http://lab.alchemica.it/materia/
  **/
 
-interface Logger extends \IteratorAggregate {
+interface Logger {
 
     const EMERGENCY  =  10;
     const ALERT      =  20;
