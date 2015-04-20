@@ -16,9 +16,8 @@ class Loader {
     protected $loader;
 
     protected $files     =  array();
-    protected $debug     =  array();
-    protected $loaded    =  array();
     protected $paths     =  array();
+    protected $loaded    =  array();
 
     /**
      * Constructor
@@ -49,26 +48,26 @@ class Loader {
         if( $info->isDir() ) {
             $path    =  rtrim( $info->getRealPath(), DIRECTORY_SEPARATOR );
 
-            // out of bounds
+            // Outside chroot: not allowed
             if( strpos( $path, $this->chroot ) !== 0 )
                 return $this;
 
-            // normalize the namespace prefix
+            // Normalize the namespace prefix
             $prefix  =  trim( $prefix, '\\' ) . '\\';
 
-            // initialize the namespace prefix array if needed
+            // Initialize the namespace prefix array if needed
             if( !isset( $this->paths[$prefix] ) ) {
                 $this->paths[$prefix]    =  array();
             }
 
-            // add if not present
+            // Add if not present
             if( !in_array( $path, $this->paths[$prefix] ) )
                 $this->paths[$prefix][]  =   $path;
         }
         else {
             $path    =  rtrim( $info->getRealPath(), DIRECTORY_SEPARATOR );
 
-            // out of bounds
+            // Outside chroot: not allowed
             if( strpos( $path, $this->chroot ) !== 0 )
                 return $this;
 
