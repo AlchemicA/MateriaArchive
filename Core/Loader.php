@@ -12,6 +12,8 @@ namespace Materia\Core;
 
 class Loader extends \Materia\Filesystem\Loader {
 
+    protected $loaded    =  [];
+
     /**
      * Registers this autoloader with SPL
      *
@@ -36,21 +38,25 @@ class Loader extends \Materia\Filesystem\Loader {
      * @see \Materia\Filesystem\Loader::load()
      **/
     public function load( $class ) {
-        // Append the file's extension
-        return parent::load( $class . '.php' );
-    }
+        // Append the file's extension and try to load it
+        if( $file = $this->locate( $class . '.php' ) ) {
+            require_once( $file );
 
-    /**
-     * @see \Materia\Filesystem\Loader::loadFile()
-     **/
-    protected function loadFile( $file ) {
-        if( file_exists( $file ) ) {
-            require_once $file;
+            $this->loaded[$class]    =  $file;
 
             return TRUE;
         }
 
         return FALSE;
+    }
+
+    /**
+     * Returns the list of classes, interfaces, and traits loaded by the autoloader
+     *
+     * @return  array       an associative array of class or interface names and their file name
+     **/
+    public function getLoaded() {
+        return $this->loaded;
     }
 
 }

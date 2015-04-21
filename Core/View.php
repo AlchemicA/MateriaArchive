@@ -10,7 +10,7 @@ namespace Materia\Core;
  * @link    http://lab.alchemica.it/materia/
  **/
 
-class View extends \Materia\Filesystem\Loader implements \ArrayAccess {
+class View implements \ArrayAccess {
 
     protected $data  =  array();
 
@@ -87,4 +87,12 @@ class View extends \Materia\Filesystem\Loader implements \ArrayAccess {
         }
     }
 
+    /**
+     * Render a template
+     *
+     * @param   string  $markup
+     * @return  string
+     **/
+    public function render( $markup ) {
+    }
 }
