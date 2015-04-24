@@ -3,12 +3,12 @@
 namespace Materia\Data\Formatters;
 
 /**
- *
+ * JSON data formatter
  *
  * @package Materia.Data
+ * @author  Filippo "Pirosauro" Bovo
+ * @link    http://lab.alchemica.it/materia/
  **/
-
-use \RuntimeException;
 
 class JSON implements \Materia\Data\Formatter {
 

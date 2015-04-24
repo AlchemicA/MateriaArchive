@@ -38,7 +38,6 @@ class Cookie implements \Materia\Data\Superglobal {
 		$this->httponly		 =	$httponly ? TRUE : FALSE;
 	}
 
-
 	/**
 	 * Set the value of a property
 	 *
@@ -145,7 +144,7 @@ class Cookie implements \Materia\Data\Superglobal {
 	 * Set data encoder/decoder (encryption)
 	 *
 	 * @param	\Materia\Data\Formatter		$formatter
-	 * @return	$this
+	 * @return	self
 	 **/
 	public function setFormatter( \Materia\Data\Formatter $formatter ) {
 		$this->formatter	 =	$formatter;

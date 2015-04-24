@@ -57,8 +57,11 @@ class Request {
 					$this->setPath( $_SERVER['REQUEST_URI'] );
 			}
 
-			if( isset( $_SERVER['QUERY_STRING'] ) )
-				$this->setQuery( $_SERVER['QUERY_STRING'] );
+			if( isset( $_SERVER['QUERY_STRING'] ) ) {
+				parse_str( $_SERVER['QUERY_STRING'], $query );
+
+				$this->setData( $query );
+			}
 
 			if( isset( $_SERVER['HTTP_USER_AGENT'] ) )
 				$this->setUserAgent( $_SERVER['HTTP_USER_AGENT'] );

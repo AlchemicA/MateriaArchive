@@ -3,16 +3,12 @@
 namespace Materia\Data\Storages;
 
 /**
- * Abstract storage class
+ * Flat file storage class
  *
  * @package Materia.Data
  * @author  Filippo "Pirosauro" Bovo
  * @link    http://lab.alchemica.it/materia/
  **/
-
-use \SplFileObject, \SplTempFileObject, \Exception, \RuntimeException, \InvalidArgument, \ExceptionOutOfBoundsException;
-
-// ---
 
 class FlatFile extends Storage {
 
@@ -36,7 +32,7 @@ class FlatFile extends Storage {
         $path    =  (string) $path;
 
         if( !is_dir( $path ) || !is_writable( $path ) )
-            throw new Exception( $path . ' is not a valid directory' );
+            throw new \Exception( $path . ' is not a valid directory' );
 
         if( isset( $options['gzip'] ) )
             $this->gzip  =  $options['gzip'] ? TRUE : FALSE;
@@ -185,7 +181,7 @@ class FlatFile extends Storage {
         $pk      =  $record->getPrimaryKey();
 
         if( !isset( $record->$pk ) )
-            throw new RuntimeException( "Missing value for primary key {$pk}" );
+            throw new \RuntimeException( "Missing value for primary key {$pk}" );
 
         $file    =  $this->openFile( $table . DIRECTORY_SEPARATOR . $record->$pk . '.dat', self::FILE_READ );
         $path    =  $file->getRealPath();
@@ -287,12 +283,12 @@ class FlatFile extends Storage {
     private function setKey( $file, $key, $value, $unique = FALSE ) {
         // Validate data
         if( !is_scalar( $value ) )
-            throw new InvalidArgumentException( 'Argument 3 passed to ' . __METHOD__ . ' must be an integer or a string, ' . gettype( $value ) . ' given' );
+            throw new \InvalidArgumentException( 'Argument 3 passed to ' . __METHOD__ . ' must be an integer or a string, ' . gettype( $value ) . ' given' );
 
         $match       =  0;
         $file        =  $file . '.key';
         $key         =  $this->normalizeKey( $key );
-        $temp        =  new SplTempFileObject( $this->swap );
+        $temp        =  new \SplTempFileObject( $this->swap );
 
         if( file_exists( $this->path . ltrim( $file, DIRECTORY_SEPARATOR ) ) ) {
             $pointer     =  $this->openFile( $file, self::FILE_READ );
@@ -304,7 +300,7 @@ class FlatFile extends Storage {
                 // We have a match
                 if( FALSE !== $data ) {
                     if( $unique )
-                        throw new RuntimeException( "Duplicate entry {$value} for key UNIQUE" );
+                        throw new \RuntimeException( "Duplicate entry {$value} for key UNIQUE" );
 
                     $data    =  $this->formatter->decode( $data );
 
@@ -365,11 +361,11 @@ class FlatFile extends Storage {
     private function removeKey( $file, $key, $value ) {
         // Validate data
         if( !is_scalar( $value ) )
-            throw new InvalidArgumentException( 'Argument 3 passed to ' . __METHOD__ . ' must be an integer or a string, ' . gettype( $value ) . ' given' );
+            throw new \InvalidArgumentException( 'Argument 3 passed to ' . __METHOD__ . ' must be an integer or a string, ' . gettype( $value ) . ' given' );
 
         $match       =  0;
         $key         =  $this->normalizeKey( $key );
-        $temp        =  new SplTempFileObject( $this->swap );
+        $temp        =  new \SplTempFileObject( $this->swap );
         $pointer     =  $this->openFile( $file . '.key', self::FILE_READ );
 
         // Itereate through lines
@@ -447,25 +443,25 @@ class FlatFile extends Storage {
         $path    =  $this->path . ltrim( $file, DIRECTORY_SEPARATOR );
 
         if( !file_exists( $path ) && ( ( $mode != self::FILE_READ ) && !@touch( $path ) ) )
-            throw new Exception( 'Could not create file ' . $path );
+            throw new \Exception( 'Could not create file ' . $path );
         else if( ( $mode == self::FILE_READ ) && !is_readable( $path ) )
-            throw new Exception( 'Could not read file ' . $path );
+            throw new \Exception( 'Could not read file ' . $path );
         else if( ( $mode != self::FILE_READ ) && !is_writable( $path ) )
-            throw new Exception( 'Could not write to file ' . $path );
+            throw new \Exception( 'Could not write to file ' . $path );
 
         // GZip data
         if( $this->gzip )
             $path    =  'compress.zlib://' . $path;
 
-        $file    =  new SplFileObject( $path, $access[$mode]['mode'] );
+        $file    =  new \SplFileObject( $path, $access[$mode]['mode'] );
 
         // Set flags
         if( self::FILE_READ == $mode )
-            $file->setFlags( SplFileObject::DROP_NEW_LINE | SplFileObject::SKIP_EMPTY | SplFileObject::READ_AHEAD );
+            $file->setFlags( \SplFileObject::DROP_NEW_LINE | \SplFileObject::SKIP_EMPTY | \SplFileObject::READ_AHEAD );
 
         // Set LOCK
         if( !$this->gzip && !$file->flock( $access[$mode]['operation'] ) )
-            throw new Exception( 'Could not lock file ' . $path );
+            throw new \Exception( 'Could not lock file ' . $path );
 
         return $file;
     }
@@ -475,11 +471,11 @@ class FlatFile extends Storage {
      *
      * @param   SplFileObject   $file       file pointer
      **/
-    private function closeFile( SplFileObject &$file ) {
+    private function closeFile( \SplFileObject &$file ) {
         if( !$this->gzip && !$file->flock( LOCK_UN ) ) {
             $file    =  NULL;
 
-            throw new Exception( 'Could not unlock file' );
+            throw new \Exception( 'Could not unlock file' );
         }
 
         $file    =  NULL;
@@ -492,11 +488,11 @@ class FlatFile extends Storage {
      */
     private function normalizeKey( $key ) {
         if( !is_string( $key ) && !is_int( $key ) )
-            throw new InvalidArgumentException( 'Argument 1 passed to ' . __METHOD__ . ' must be an integer or a string,  ' . gettype( $key ) . ' given' );
+            throw new \InvalidArgumentException( 'Argument 1 passed to ' . __METHOD__ . ' must be an integer or a string,  ' . gettype( $key ) . ' given' );
         else if( strlen( $key ) > 256 )
-            throw new InvalidArgumentException( 'Maximum key length is 256 characters' );
+            throw new \InvalidArgumentException( 'Maximum key length is 256 characters' );
         else if( strpos( $key, '=' ) !== FALSE )
-            throw new InvalidArgumentException( 'Key may not contain the equals character' );
+            throw new \InvalidArgumentException( 'Key may not contain the equals character' );
 
         return $key;
     }
@@ -582,7 +578,7 @@ class FlatFile extends Storage {
 
             // Overflow
             if( $dec >= 2821109907455 )
-                throw new OverflowException( "File UID ($last) overflow" );
+                throw new \OverflowException( "File UID ($last) overflow" );
 
             $id      =  sprintf( "%8s%08s", $today, base_convert( ( $dec + 1 ), 10, 36 ) );
         }
@@ -592,4 +588,5 @@ class FlatFile extends Storage {
 
         return $id;
     }
+
 }

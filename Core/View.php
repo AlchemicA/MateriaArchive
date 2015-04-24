@@ -10,89 +10,52 @@ namespace Materia\Core;
  * @link    http://lab.alchemica.it/materia/
  **/
 
-class View implements \ArrayAccess {
+class View {
 
-    protected $data  =  array();
+    protected $locator;
+    protected $template;
+
+    protected $output    =  FALSE;
 
     /**
-     * Set the value of a property
+     * Constructor
      *
-     * @param   string  $key    property name
-     * @param   string  $value  property value
+     * @param   \Materia\Filesystem\Locator     $locator    file locator
      **/
-    public function __set( $key, $value ) {
-        $this->offsetSet( $key, $value );
-    }
-
-    /**
-     * Get the value of a property
-     *
-     * @param   string  $key    property name
-     * @return  mixed           property value
-     **/
-    public function __get( $key ) {
-        return $this->offsetGet( $key );
-    }
-
-    /**
-     * Unset a property
-     *
-     * @param   string  $key    property name
-     **/
-    public function __unset( $key ) {
-        $this->offsetUnset( $key );
-    }
-
-    /**
-     * Checks if a property exists
-     *
-     * @param   string  $key    property name
-     * @return  boolean
-     **/
-    public function __isset( $key ) {
-        return $this->offsetExists( $key );
-    }
-
-    /**
-     * @see ArrayAccess::offsetSet()
-     **/
-    public function offsetSet( $offset, $value ) {
-        $this->data[$offset]     =  $value;
-    }
-
-    /**
-     * @see ArrayAccess::offsetGet()
-     **/
-    public function offsetGet( $offset ) {
-        if( isset( $this->data[$offset] ) ) {
-            return $this->data[$offset];
-        }
-
-        return NULL;
-    }
-
-    /**
-     * @see ArrayAccess::offsetExists()
-     **/
-    public function offsetExists( $offset ) {
-        return isset( $this->data[$offset] );
-    }
-
-    /**
-     * @see ArrayAccess::offsetUnset()
-     **/
-    public function offsetUnset( $offset ) {
-        if( isset( $this->data[$offset] ) ) {
-            unset( $this->data[$offset] );
-        }
+    public function __construct( \Materia\Filesystem\Locator $locator ) {
+        $this->locator   =  $locator;
     }
 
     /**
      * Render a template
      *
-     * @param   string  $markup
+     * @param   string  $template
+     * @param   mixed   $data
      * @return  string
      **/
-    public function render( $markup ) {
+    public function render( $template, array $data = [] ) {
+        if( $this->template = $this->locator->locate( $template . '.html' ) ) {
+            // Extract the data
+            extract( $data );
+
+            if( !$this->output ) {
+                $this->output    =  TRUE;
+
+                // Start the output buffer
+                ob_start();
+
+                // Require the file
+                require( $this->template );
+
+                $this->output    =  FALSE;
+
+                // Flush the content and turn off the  output buffer
+                return ob_get_flush();
+            }
+            else {
+                require( $this->template );
+            }
+        }
     }
+
 }

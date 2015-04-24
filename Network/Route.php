@@ -41,7 +41,7 @@ class Route {
         // Map methods to patterns
         $this->closures[]    =  $closure;
 
-        $key     =  key( array_slice( $this->closures, -1, 1, TRUE ) );
+        $key     =  end( ( array_keys( $this->closures ) ) );
 
         // Register routes
         foreach( $methods as $method ) {
@@ -62,9 +62,9 @@ class Route {
         $pattern     =  array_map(
             function( $str ) {
                 if( $str == '*' ) {
-                    $str     =  '(.*)';
+                    return '(.*)';
                 }
-                else if( ( $str != NULL ) && ( $str{0} == '@' ) ) {
+                else if( $str && ( $str{0} == '@' ) ) {
                     if( preg_match( '/@([\w]+)(\:([^\/]*))?/', $str, $matches ) ) {
                         return '(?P<' . $matches[1] . '>' . ( isset( $matches[3] ) ? $matches[3] : '[^(\/|\?)]+' ) . ')';
                     }
@@ -83,10 +83,10 @@ class Route {
     /**
      * Try to match a request to a pattern
      *
-     * @param   Request $request
+     * @param   Request $request    the request object
      * @return  mixed
      **/
-    public function process( Request &$request ) {
+    public function processRequest( Request &$request ) {
         $params  =  array();
         $method  =  $request->getMethod();
         $path    =  $request->getPath();
@@ -108,17 +108,19 @@ class Route {
 
         foreach( $this->routes[$method] as $key => $pattern ) {
             if( preg_match( $pattern, $path, $matches ) ) {
-                $reflection  =  new \ReflectionFunction( $this->closures[$key] );
-                $args        =  array();
+                // $reflection  =  new \ReflectionFunction( $this->closures[$key] );
+                // $args        =  array();
 
-                foreach( $reflection->getParameters() as $parameter ) {
-                    if( $parameter->name && isset( $matches[$parameter->name] ) ) {
-                        $pos         =  $parameter->getPosition();
-                        $args[$pos]  =  $matches[$parameter->name];
-                    }
-                }
+                // foreach( $reflection->getParameters() as $parameter ) {
+                //     if( $parameter->name && isset( $matches[$parameter->name] ) ) {
+                //         $pos         =  $parameter->getPosition();
+                //         $args[$pos]  =  $matches[$parameter->name];
+                //     }
+                // }
 
-                return $reflection[$key]->invokeArgs( $args );
+                // return $reflection[$key]->invokeArgs( $args );
+
+                return call_user_func( $this->closures[$key], $matches );
             }
         }
 
