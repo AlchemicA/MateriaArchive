@@ -1,9 +1,9 @@
 <?php
 
-namespace Materia\Core;
+namespace Materia\Core\DI;
 
 /**
- * A simple Dependency Injection container
+ * Simple implementation of the Dependency Injection pattern
  *
  * @package Materia.Core
  * @author  Filippo "Pirosauro" Bovo
@@ -36,7 +36,6 @@ class Container implements \ArrayAccess {
 		else {
 			throw new \InvalidArgumentException( sprintf( '%s accepts only objects as properties, %s given', array( __CLASS__, gettype( $value ) ) ) );
 		}
-
 	}
 
 	/**

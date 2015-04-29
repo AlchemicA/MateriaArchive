@@ -1,9 +1,9 @@
 <?php
 
-namespace Materia\Core;
+namespace Materia\Core\MVC;
 
 /**
- * View class
+ * Simple implementation of the MVC pattern
  *
  * @package Materia.Core
  * @author  Filippo "Pirosauro" Bovo
@@ -24,6 +24,15 @@ class View {
      **/
     public function __construct( \Materia\Filesystem\Locator $locator ) {
         $this->locator   =  $locator;
+    }
+
+    /**
+     * Returns asset URL
+     *
+     * @param   string  $resource
+     **/
+    public function asset( $resource ) {
+        return ( $_SERVER['HTTPS'] ? 'https://' : 'http://' ) . $_SERVER['HTTP_HOST'] . '/' . ltrim( $resource, '/' );
     }
 
     /**

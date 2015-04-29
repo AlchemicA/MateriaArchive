@@ -146,7 +146,7 @@ class MySQL implements \Materia\Data\Storage {
     /**
      * @see \Materia\Data\Storage::load()
      **/
-    public function load( \Materia\Data\Record &$record, $dependancies = FALSE ) {
+    public function load( \Materia\Data\Record &$record, $relationships = FALSE ) {
         $table   =  $this->prefix . $record->getRecordName();
         $pk      =  $record->getPrimaryKey();
 

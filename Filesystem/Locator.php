@@ -22,15 +22,21 @@ class Locator {
      * Constructor
      *
      * @param   \SplFileInfo    $chroot     base path
+     * @param   boolean         $register   register $chroot as path
      **/
-    public function __construct( \SplFileInfo $chroot ) {
+    public function __construct( \SplFileInfo $chroot, $register = FALSE ) {
         if( !$chroot->isDir() )
             throw new \InvalidArgumentException( sprintf( 'Invalid base path %s', $chroot->getRealPath() ) );
 
         if( !$chroot->isReadable() )
             throw new \InvalidArgumentException( sprintf( 'Path %s is not readable', $chroot->getRealPath() ) );
 
+        // Normalize path
         $this->chroot    =  rtrim( $chroot->getRealPath(), DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR;
+
+        // Register $chroot as path
+        if( $register )
+            $this->setPath( $chroot );
     }
 
     /**
@@ -44,7 +50,11 @@ class Locator {
         if( !$info->isReadable() )
             return $this;
 
-        $path    =  rtrim( $info->getRealPath(), DIRECTORY_SEPARATOR );
+        // Normalize path
+        if( $info->isDir() )
+            $path    =  rtrim( $info->getRealPath(), DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR;
+        else
+            $path    =  $info->getRealPath();
 
         // Disallowed path
         if( strpos( $path, $this->chroot ) !== 0 )

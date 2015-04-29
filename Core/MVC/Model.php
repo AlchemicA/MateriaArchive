@@ -1,14 +1,14 @@
 <?php
 
-namespace Materia\Core;
+namespace Materia\Core\MVC;
 
 /**
- * Controller Interface
+ * Simple implementation of the MVC pattern
  *
  * @package Materia.Core
  * @author  Filippo "Pirosauro" Bovo
  * @link    http://lab.alchemica.it/materia/
  **/
 
-interface Controller {
+interface Model {
 }

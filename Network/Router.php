@@ -10,7 +10,7 @@ namespace Materia\Network;
  * @link    http://lab.alchemica.it/materia/
  **/
 
-class Route {
+class Router {
 
     protected $routes        =  array();
     protected $closures      =  array();

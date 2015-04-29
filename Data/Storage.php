@@ -21,9 +21,10 @@ interface Storage {
      * Returns a single record
      *
      * @param   Record  $record         record with PK populated
+     * @param   boolean $relationships  resolve and load record's relationships
      * @return  boolean                 TRUE on success or FALSE
      **/
-    public function load( Record &$record );
+    public function load( Record &$record, $relationships = FALSE );
 
     /**
      * Save a record
