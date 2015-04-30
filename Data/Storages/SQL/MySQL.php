@@ -22,16 +22,18 @@ class MySQL implements \Materia\Data\Storage {
     /**
      * Constructor
      *
-     * @param   string  $dsn
-     * @param   string  $username       user name to connect MySQL server
-     * @param   string  $password       password to connect MySQL server
+     * @param   string  $host           server's host name or IP address
+     * @param   string  $username       user name to connect the server
+     * @param   string  $password       password to connect the server
+     * @param   string  $database       database's name
      * @param   string  $prefix         table prefix
+     * @param   integer $port           port number
      **/
-    public function __construct( $dsn, $username, $password, $prefix = '' ) {
-        $this->dsn       =  (string) $dsn;
-        $this->username  =  (string) $username;
-        $this->password  =  (string) $password;
-        $this->prefix    =  (string) $prefix;
+    public function __construct( $host, $username, $password, $database, $prefix = '', $port = 3306 ) {
+        $this->dsn       =  "mysql:dbname={$database};host={$host}";
+        $this->username  =  $username;
+        $this->password  =  $password;
+        $this->prefix    =  $prefix;
     }
 
     /**
@@ -175,17 +177,6 @@ class MySQL implements \Materia\Data\Storage {
         $table   =  $record->getRecordName();
         $pk      =  $record->getPrimaryKey();
 
-/*
-$values  =  array_combine(
-    array_map(
-        function( $k ) {
-            return ':' . $k;
-        },
-        array_keys( $record->getArrayCopy( TRUE ) )
-    )
-    , $array
-);
-*/
         // Update
         if( $record->isUpdated() ) {
             foreach( $record as $field => $value ) {

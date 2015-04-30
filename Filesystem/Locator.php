@@ -25,18 +25,21 @@ class Locator {
      * @param   boolean         $register   register $chroot as path
      **/
     public function __construct( \SplFileInfo $chroot, $register = FALSE ) {
-        if( !$chroot->isDir() )
+        if( !$chroot->isDir() ) {
             throw new \InvalidArgumentException( sprintf( 'Invalid base path %s', $chroot->getRealPath() ) );
+        }
 
-        if( !$chroot->isReadable() )
+        if( !$chroot->isReadable() ) {
             throw new \InvalidArgumentException( sprintf( 'Path %s is not readable', $chroot->getRealPath() ) );
+        }
 
         // Normalize path
         $this->chroot    =  rtrim( $chroot->getRealPath(), DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR;
 
         // Register $chroot as path
-        if( $register )
+        if( $register ) {
             $this->setPath( $chroot );
+        }
     }
 
     /**
@@ -46,19 +49,27 @@ class Locator {
      * @param   string      $prefix     the namespace prefix
      * @return  self
      **/
-    public function setPath( \SplFileInfo $info, $prefix = '\\' ) {
-        if( !$info->isReadable() )
+    public function setPath( \SplFileInfo $info, $priority = 0, $prefix = '\\' ) {
+        if( !$info->isReadable() ) {
             return $this;
+        }
+
+        if( !is_int( $priority ) ) {
+            $priority    =  0;
+        }
 
         // Normalize path
-        if( $info->isDir() )
+        if( $info->isDir() ) {
             $path    =  rtrim( $info->getRealPath(), DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR;
-        else
+        }
+        else {
             $path    =  $info->getRealPath();
+        }
 
         // Disallowed path
-        if( strpos( $path, $this->chroot ) !== 0 )
+        if( strpos( $path, $this->chroot ) !== 0 ) {
             return $this;
+        }
 
         if( $info->isDir() ) {
             // Normalize the namespace prefix
@@ -70,8 +81,9 @@ class Locator {
             }
 
             // Add if not present
-            if( !in_array( $path, $this->paths[$prefix] ) )
+            if( !in_array( $path, $this->paths[$prefix] ) ) {
                 $this->paths[$prefix][]  =   $path;
+            }
         }
         else {
             $this->files[$prefix]    =  $path;

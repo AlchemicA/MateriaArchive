@@ -27,11 +27,14 @@ class Cron {
 	protected $tasks;
 
 	/**
+	 * Constructor
+	 *
 	 * @param   string  $path               local path where to store .lock files
 	 **/
 	public function __construct( \SplFileInfo $path ) {
-		if( !$path->isDir() )
+		if( !$path->isDir() ) {
 			throw new \InvalidArgumentException( 'Argument 1 passed to ' . __METHOD__ . ' must be a valid path' );
+		}
 
 		$this->path      =  rtrim( $path->getRealPath(), DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR;
 		$this->tasks     =  new \ArrayObject( array(), \ArrayObject::ARRAY_AS_PROPS );
@@ -43,7 +46,7 @@ class Cron {
 	 * @param   string      $name           job name
 	 * @param   callable    $callback       callback to execute
 	 * @param   mixed       $expression     cron expression
-	 * @return  $this
+	 * @return  self
 	 **/
 	public function registerTask( $name, callable $callback, $expression ) {
 		$this->tasks[$name]  =  new \ArrayObject(
@@ -64,11 +67,12 @@ class Cron {
 	 * Disable the execution of a job
 	 *
 	 * @param   string  $name       name of the task to disable
-	 * @return  $this
+	 * @return  self
 	 **/
 	public function disableTask( $name ) {
-		if( isset( $this->tasks[$name] ) && ( $this->tasks[$name]['status'] & self::STATUS_ACTIVE ) )
+		if( isset( $this->tasks[$name] ) && ( $this->tasks[$name]['status'] & self::STATUS_ACTIVE ) ) {
 			$this->tasks[$name]['status']   ^=  self::STATUS_ACTIVE;
+		}
 
 		return $this;
 	}
@@ -77,11 +81,12 @@ class Cron {
 	 * Enable the execution of a job
 	 *
 	 * @param   string  $name       name of the job to enable
-	 * @return  $this
+	 * @return  self
 	 **/
 	public function enableTask( $name ) {
-		if( isset( $this->tasks[$name] ) )
+		if( isset( $this->tasks[$name] ) ) {
 			$this->tasks[$name]['status']   |=  self::STATUS_ACTIVE;
+		}
 
 		return $this;
 	}
@@ -89,7 +94,7 @@ class Cron {
 	/**
 	 * Get list of tasks
 	 *
-	 * @return  array               list of registered tasks
+	 * @return  \ArrayObject	list of registered tasks
 	 **/
 	public function getTasks() {
 		return $this->tasks;
@@ -127,8 +132,9 @@ class Cron {
 						$task->ended     =  microtime( TRUE );
 
 						// Job finished, have a rest?
-						if( $sleep && is_numeric( $sleep ) )
+						if( $sleep && is_numeric( $sleep ) ) {
 							usleep( $sleep );
+						}
 					}
 				}
 				// Already running
@@ -141,8 +147,9 @@ class Cron {
 						$task->status   |=  self::STATUS_RUNNING;
 
 						// Takes too long, trigger a notice
-						if( $delta > ( 60 * 60 ) )
+						if( $delta > ( 60 * 60 ) ) {
 							trigger_error( "{$name} (#{$pid}) takes more then " . sprintf( '%02d:%02d:%02d', floor( $delta / 3600 ), ( $delta / 60 ) % 60, $delta % 60 ) . " to be executed!" );
+						}
 					}
 					// Release the lock
 					else {
@@ -162,10 +169,12 @@ class Cron {
 	private function isRunning( $pid ) {
 		$pids  =  explode( PHP_EOL, `ps -e | awk '{print $1}'` );
 
-		if( in_array( $pid, $pids ) )
+		if( in_array( $pid, $pids ) ) {
 			return TRUE;
-		else
+		}
+		else {
 			return FALSE;
+		}
 	}
 
 	/**
@@ -179,12 +188,14 @@ class Cron {
 		$cron    =  preg_split( '/\s+/', $expression, NULL, PREG_SPLIT_NO_EMPTY );
 
 		// Syntax error
-		if( count( $cron ) !== 5 )
-			throw new \RuntimeException( sprintf( 'Cron expression should have exactly 5 arguments, "%s" given', $expression ) );
+		if( count( $cron ) !== 5 ) {
+			throw new \InvalidArgumentException( sprintf( 'Cron expression should have exactly 5 arguments, "%s" given', $expression ) );
+		}
 
 		// Convert string to *NIX timestamp
-		if( is_string( $time ) )
+		if( is_string( $time ) ) {
 			$time    =  strtotime( $time );
+		}
 
 		$date    =  getdate( $time );
 
@@ -201,16 +212,18 @@ class Cron {
 	 */
 	private function matchTimeComponent( $expression, $value, $type ) {
 		// Handle all match
-		if( $expression === '*' )
+		if( $expression === '*' ) {
 			return TRUE;
+		}
 
 		// Handle multiple options
 		if( strpos( $expression, ',' ) !== FALSE ) {
 			$args  =  explode( ',', $expression );
 
 			foreach( $args as $arg ) {
-				if( $this->matchTimeComponent( $arg, $value, $type ) )
+				if( $this->matchTimeComponent( $arg, $value, $type ) ) {
 					return TRUE;
+				}
 			}
 
 			return FALSE;
@@ -220,15 +233,18 @@ class Cron {
 		if( strpos( $expression, '/' ) !== FALSE ) {
 			$args  =  explode( '/', $expression );
 
-			if( count( $args ) !== 2 )
+			if( count( $args ) !== 2 ) {
 				throw new \RuntimeException( sprintf( 'Invalid cron expression component: expecting match/modulus, "%s" given', $expression ) );
+			}
 
-			if( !is_numeric( $args[1] ) )
+			if( !is_numeric( $args[1] ) ) {
 				throw new \RuntimeException( sprintf( 'Invalid cron expression component: expecting numeric modulus, "%s" given', $expression ) );
+			}
 
 			$expression  =  $args[0];
 			$modulus     =  $args[1];
-		} else {
+		}
+		else {
 			$modulus     =  1;
 		}
 
@@ -241,8 +257,9 @@ class Cron {
 		elseif( strpos( $expression, '-' ) !== FALSE ) {
 			$args  =  explode( '-', $expression );
 
-			if( count( $args ) !== 2 )
+			if( count( $args ) !== 2 ) {
 				throw new \RuntimeException( sprintf( 'Invalid cron expression component: expecting from-to structure, "%s" given', $expression ) );
+			}
 
 			$from  =  $this->toNumeric( $args[0], $type );
 			$to    =  $this->toNumeric( $args[1], $type );
@@ -254,8 +271,9 @@ class Cron {
 		}
 
 		// Final check
-		if( ( $from === FALSE ) || ( $to === FALSE ) )
+		if( ( $from === FALSE ) || ( $to === FALSE ) ) {
 			throw new \RuntimeException( sprintf( 'Invalid cron expression component: expecting numeric or valid string, "%s" given', $expression ) );
+		}
 
 		return ( $value >= $from ) && ( $value <= $to ) && ( ( $value % $modulus ) === 0 );
 	}
@@ -319,18 +337,21 @@ class Cron {
 
 		// Numeric format
 		if( is_numeric( $value ) ) {
-			if( in_array( (int) $value, $data, TRUE ) )
+			if( in_array( (int) $value, $data, TRUE ) ) {
 				return $value;
-			else
+			}
+			else {
 				return FALSE;
+			}
 		}
 
 		// String format
 		if( is_string( $value ) ) {
 			$value   =  strtolower( substr( $value, 0, 3 ) );
 
-			if( isset( $data[$value] ) )
+			if( isset( $data[$value] ) ) {
 				return $data[$value];
+			}
 		}
 
 		return FALSE;

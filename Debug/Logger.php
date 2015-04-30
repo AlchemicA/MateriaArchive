@@ -10,7 +10,7 @@ namespace Materia\Debug;
  * @link    http://lab.alchemica.it/materia/
  **/
 
-interface Logger {
+interface Logger extends \ArrayAccess {
 
     const EMERGENCY  =  10;
     const ALERT      =  20;

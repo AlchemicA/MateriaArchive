@@ -12,7 +12,7 @@ namespace Materia\Core\Observer;
 
 class Subject implements \SplSubject {
 
-    protected $observers     =  array();
+    protected $observers     =  [];
 
     /**
      * Attach a new observer
