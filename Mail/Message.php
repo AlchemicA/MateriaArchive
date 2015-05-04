@@ -84,15 +84,15 @@ class Message implements \ArrayAccess {
 	 **/
 	public function reset() {
 		if( !isset( $this->sent ) ) {
-			$this->from			 =	array();
-			$this->to			 =	array();
-			$this->cc			 =	array();
-			$this->headers		 =	array();
+			$this->from			 =	[];
+			$this->to			 =	[];
+			$this->cc			 =	[];
+			$this->headers		 =	[];
 			$this->subject		 =	NULL;
 			$this->text			 =	NULL;
 			$this->html			 =	NULL;
 			$this->wrap			 =	96;
-			$this->attachments	 =	array();
+			$this->attachments	 =	[];
 			$this->boundaries	 =	$this->generateBoundaries();
 			$this->sent			 =	FALSE;
 			$this->charset		 =	'UTF-8';
@@ -131,7 +131,7 @@ class Message implements \ArrayAccess {
 	 **/
 	public function setFrom( $email, $name = NULL ) {
 		// From recipient should not be encoded to UTF-8, likely an obfuscation technique
-		$this->from	 =	array( $email => $this->formatMailHeader( $email, $name ) );
+		$this->from	 =	[ $email => $this->formatMailHeader( $email, $name ) ];
 
 		return $this;
 	}
@@ -308,8 +308,9 @@ class Message implements \ArrayAccess {
 		$email	 =	$this->filterEmail( (string) $email );
 
 		// Just email address, nothing to do
-		if( empty( $name ) )
+		if( empty( $name ) ) {
 			return $email;
+		}
 
 		$name	 =	$this->encodeUtf8( $this->filterName( $name ) );
 
@@ -325,8 +326,9 @@ class Message implements \ArrayAccess {
 	 **/
 	public function setHeader( $header, $value ) {
 		// $this->headers[]   =  sprintf( '%s: %s', (string) $header, (string) $value );
-		if( is_string( $header ) )
+		if( is_string( $header ) ) {
 			$this->headers[$header]	 =	(string) $value;
+		}
 
 		return $this;
 	}
@@ -350,8 +352,9 @@ class Message implements \ArrayAccess {
 	public function encodeUtf8( $value ) {
 		$value   =  trim( $value );
 
-		if( preg_match( '/(\s)/', $value ) )
+		if( preg_match( '/(\s)/', $value ) ) {
 			return $this->encodeUtf8Words( $value );
+		}
 
 		return $this->encodeUtf8Word( $value );
 	}
@@ -374,7 +377,7 @@ class Message implements \ArrayAccess {
 	 **/
 	protected function encodeUtf8Words( $value ) {
 		$words		 =	preg_split( '/[\s]+/', $value, -1, PREG_SPLIT_NO_EMPTY ); // explode( ' ', $value );
-		$encoded	 =	array();
+		$encoded	 =	[];
 
 		foreach( $words as $word ) {
 			$encoded[]	 =	$this->encodeUtf8Word( $word );
@@ -390,7 +393,7 @@ class Message implements \ArrayAccess {
 	 * @return	string
 	 **/
 	public function filterEmail( $email ) {
-		$rule	 =	array(
+		$rule	 =	[
 			"\r"	=>	'',
 			"\n"	=>  '',
 			"\t"	=>  '',
@@ -419,7 +422,7 @@ class Message implements \ArrayAccess {
 			'"'		=>	"'",
 			'<'		=>	'[',
 			'>'		=>	']',
-		);
+		];
 
 		$name	 =	filter_var( $name, FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES );
 		$name	 =	trim( strtr( $name, $rule ) );
@@ -434,11 +437,11 @@ class Message implements \ArrayAccess {
 	 * @return	string
 	 **/
 	public function filterOther( $data ) {
-		$rule	 =	array(
+		$rule	 =	[
 			"\r"	=>	'',
 			"\n"	=>	'',
 			"\t"	=>	'',
-		);
+		];
 
 		return strtr( filter_var( $data, FILTER_SANITIZE_STRING ), $rule );
 	}
@@ -450,7 +453,7 @@ class Message implements \ArrayAccess {
 	 * @return	array
 	 **/
 	protected function generateBoundaries( $count = 3 ) {
-		$values	 =	array();
+		$values	 =	[];
 
 		for( $c = 0; $c < $count; $c++ ) {
 			$values[]	 =	md5( uniqid( time() ) );
@@ -471,8 +474,9 @@ class Message implements \ArrayAccess {
 		foreach( $lines as &$line ) {
 			$line	 =	rtrim( $line );
 
-			if( mb_strlen( $line ) <= $width )
+			if( mb_strlen( $line ) <= $width ) {
 				continue;
+			}
 
 			$words	 =	explode( ' ', $line );
 			$line	 =	NULL;
@@ -516,14 +520,17 @@ class Message implements \ArrayAccess {
 		$message	.=	'Date: ' . date( 'r' ) . $this->eol;
 		$message	.=	'Message-ID: <' . md5( 'TX' . md5( time() ) . uniqid() ) . '@' . current( explode( '@', key( $this->from ) ) ) . '>' . $this->eol;
 
-		if( !isset( $this->headers['Return-Path'] ) )
+		if( !isset( $this->headers['Return-Path'] ) ) {
 			$message	.=	'Return-Path: ' . $this->formatMailHeader( key( $this->from ), current( $this->from ) ) . $this->eol;
+		}
 
-		if( !isset( $this->headers['X-Priority'] ) )
+		if( !isset( $this->headers['X-Priority'] ) ) {
 			$message	.=	'X-Priority: 3' . $this->eol;
+		}
 
-		if( !isset( $this->headers['X-Mailer'] ) )
+		if( !isset( $this->headers['X-Mailer'] ) ) {
 			$message	.=	'X-Mailer: Materia (https://github.com/AlchemicA/Materia)' . $this->eol;
+		}
 
 		foreach( $this->headers as $key => $value ) {
 			if( !in_array( $key, array( 'MIME-Version', 'Date', 'Message-ID' ) ) )

@@ -21,7 +21,7 @@ class JSON implements \Materia\Data\Formatter {
         if( JSON_ERROR_NONE !== ( $error = json_last_error() ) ) {
             $error   =  $this->getError( $error );
 
-            throw new RuntimeException( sprintf( 'Invalid JSON: %s', $error ) );
+            throw new \RuntimeException( sprintf( 'Invalid JSON: %s', $error ) );
         }
 
         return $data;
@@ -36,10 +36,10 @@ class JSON implements \Materia\Data\Formatter {
         if( JSON_ERROR_NONE !== ( $error = json_last_error() ) ) {
             $error   =  $this->getError( $error );
 
-            throw new RuntimeException( sprintf( 'Invalid JSON: %s', $error ) );
+            throw new \RuntimeException( sprintf( 'Invalid JSON: %s', $error ) );
         }
 
-        return $data ? $data : array();
+        return $data ? $data : [];
     }
 
     /**
@@ -69,13 +69,13 @@ class JSON implements \Materia\Data\Formatter {
      **/
     private function getError( $code ) {
         if( !isset( $errors ) ) {
-            static $errors    =  array(
+            static $errors    =  [
                 JSON_ERROR_DEPTH            =>  'The maximum stack depth has been exceeded',
                 JSON_ERROR_STATE_MISMATCH   =>  'Invalid or malformed JSON',
                 JSON_ERROR_CTRL_CHAR        =>  'Control character error, possibly incorrectly encoded',
                 JSON_ERROR_SYNTAX           =>  'Syntax error',
                 JSON_ERROR_UTF8             =>  'Malformed UTF-8 characters, possibly incorrectly encoded',
-            );
+            ];
         }
 
         return isset( $errors[$code]) ? $errors[$code] : 'Unknown error';

@@ -29,8 +29,9 @@ class Collection implements \Materia\Data\Collection {
 
         // Populate type
         if( $this->current ) {
-            if( !( $this->current instanceof \Materia\Data\Record ) )
+            if( !( $this->current instanceof \Materia\Data\Record ) ) {
                 throw new \RuntimeException( 'Elements of collection must be instances of \Materia\Data\Record, instances of ' . get_class( $this->current ) . ' given' );
+            }
 
             $this->type  =  get_class( $this->current );
         }
@@ -43,10 +44,12 @@ class Collection implements \Materia\Data\Collection {
      * @see Iterator::rewind()
      **/
     public function rewind() {
-        if( $this->reverse )
+        if( $this->reverse ) {
             $this->current   =  $this->storage->fetch( \PDO::FETCH_CLASS, \PDO::FETCH_ORI_LAST );
-        else
+        }
+        else {
             $this->current   =  $this->storage->fetch( \PDO::FETCH_CLASS, \PDO::FETCH_ORI_FIRST );
+        }
     }
 
     /**
@@ -85,10 +88,12 @@ class Collection implements \Materia\Data\Collection {
      **/
     public function next() {
         if( $this->current ) {
-            if( $this->reverse )
+            if( $this->reverse ) {
                 $this->current   =  $this->storage->fetch( \PDO::FETCH_CLASS, \PDO::FETCH_ORI_PRIOR );
-            else
+            }
+            else {
                 $this->current   =  $this->storage->fetch( \PDO::FETCH_CLASS, \PDO::FETCH_ORI_NEXT );
+            }
         }
     }
 

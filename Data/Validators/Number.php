@@ -12,9 +12,9 @@ namespace Materia\Data\Validators;
 
 class Number implements \Materia\Data\Validator {
 
-    const INTEGER        =  1;
+    const INTEGER        =  'integer';
 
-    protected $conditions    =  array();
+    protected $conditions    =  [];
     protected $precision;
 
     /**
@@ -23,8 +23,9 @@ class Number implements \Materia\Data\Validator {
      * @param   integer $precision      number of decimal digits, default PHP limits
      **/
     public function __construct( $precision = NULL ) {
-        if( is_integer( $precision ) )
+        if( is_integer( $precision ) ) {
             $this->precision     =  $precision;
+        }
     }
 
     /**
@@ -32,15 +33,17 @@ class Number implements \Materia\Data\Validator {
      **/
     public function isValid( $value, $default = FALSE ) {
         // Must be numeric
-        if( !is_numeric( $value ) )
+        if( !is_numeric( $value ) ) {
             return FALSE;
+        }
 
         // Out of bounds
         if( isset( $this->precision ) ) {
             $digits  =  strlen( substr( strrchr( "{$value}", '.' ), 1 ) );
 
-            if( $digits > $this->precision )
+            if( $digits > $this->precision ) {
                 return FALSE;
+            }
         }
 
         // Process others
@@ -49,16 +52,19 @@ class Number implements \Materia\Data\Validator {
                 case 'range':
                     list( $min, $max ) = $condition;
 
-                    if( !( ( $value >= $min ) && ( $value <= $max ) ) )
+                    if( !( ( $value >= $min ) && ( $value <= $max ) ) ) {
                         return FALSE;
+                    }
 
                     break;
 
                 case 'integer':
-                    if( $condition && !is_integer( $value ) )
+                    if( $condition && !is_integer( $value ) ) {
                         return FALSE;
-                    else if( !$condition && is_integer( $value ) )
+                    }
+                    else if( !$condition && is_integer( $value ) ) {
                         return FALSE;
+                    }
 
                     break;
             }
@@ -74,7 +80,7 @@ class Number implements \Materia\Data\Validator {
      * @param   integer $max    maximum allowed value
      **/
     public function range( $min, $max ) {
-        $this->conditions['range']   =  array( $min, $max );
+        $this->conditions['range']   =  [ $min, $max ];
     }
 
     /**
@@ -83,8 +89,9 @@ class Number implements \Materia\Data\Validator {
      * @param   integer $what   condition's constant(s)
      **/
     public function is( $what ) {
-        if( $what & self::INTEGER )
+        if( $what & self::INTEGER ) {
             $this->conditions['integer']     =  TRUE;
+        }
     }
 
     /**
@@ -93,8 +100,9 @@ class Number implements \Materia\Data\Validator {
      * @param   integer $what   condition's constant(s)
      **/
     public function not( $what ) {
-        if( $what & self::INTEGER )
+        if( $what & self::INTEGER ) {
             $this->conditions['integer']     =  FALSE;
+        }
     }
 
 }

@@ -36,8 +36,9 @@ class Cron {
 			throw new \InvalidArgumentException( 'Argument 1 passed to ' . __METHOD__ . ' must be a valid path' );
 		}
 
+		// Normalize path
 		$this->path      =  rtrim( $path->getRealPath(), DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR;
-		$this->tasks     =  new \ArrayObject( array(), \ArrayObject::ARRAY_AS_PROPS );
+		$this->tasks	 =	new \ArrayObject( [], \ArrayObject::ARRAY_AS_PROPS );
 	}
 
 	/**
@@ -50,13 +51,13 @@ class Cron {
 	 **/
 	public function registerTask( $name, callable $callback, $expression ) {
 		$this->tasks[$name]  =  new \ArrayObject(
-			array(
+			[
 				'callback'      =>  $callback,
 				'expression'    =>  $expression,
 				'status'        =>  self::STATUS_ACTIVE,
 				'started'       =>  0,
 				'ended'         =>  0,
-			),
+			],
 			\ArrayObject::ARRAY_AS_PROPS
 		);
 

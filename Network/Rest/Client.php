@@ -14,7 +14,7 @@ class Client extends \Materia\Network\Request {
 
 	protected $formatter;
 
-	protected $headers	 =	array();
+	protected $headers	 =	[];
 
 	/**
 	 * Set headers
@@ -58,8 +58,9 @@ class Client extends \Materia\Network\Request {
 				curl_setopt( $curl, CURLOPT_URL, $url );
 				curl_setopt( $curl, CURLOPT_CUSTOMREQUEST, $this->method );
 
-				if( isset( $this->data ) )
+				if( isset( $this->data ) ) {
 					curl_setopt( $curl, CURLOPT_POSTFIELDS, $this->data );
+				}
 
 				break;
 
@@ -68,8 +69,9 @@ class Client extends \Materia\Network\Request {
 				curl_setopt( $curl, CURLOPT_URL, $url );
 				curl_setopt( $curl, CURLOPT_POST, TRUE );
 
-				if( isset( $this->data ) )
+				if( isset( $this->data ) ) {
 					curl_setopt( $curl, CURLOPT_POSTFIELDS, $this->data );
+				}
 
 				break;
 
@@ -87,8 +89,9 @@ class Client extends \Materia\Network\Request {
 
 		curl_close( $curl );
 
-		if( !isset( $this->response ) )
+		if( !isset( $this->response ) ) {
 			$this->response	 =	new \Materia\Network\Response();
+		}
 
 		$this->response
 			->setStatus( $status )

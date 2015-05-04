@@ -23,7 +23,7 @@ abstract class Record implements \ArrayAccess, \Iterator {
 	 *
 	 * @param	array	$data	initial data
 	 **/
-	public final function __construct( array $data = array() ) {
+	public final function __construct( array $data = [] ) {
 		foreach( $data as $offset => $value ) {
 			$this->offsetSet( $offset, $value );
 		}
@@ -35,7 +35,7 @@ abstract class Record implements \ArrayAccess, \Iterator {
 	 * Object cloning
 	 **/
 	public function __clone() {
-		$this->data	 =	array();
+		$this->data	 =	[];
 	}
 
 	/**
@@ -89,8 +89,9 @@ abstract class Record implements \ArrayAccess, \Iterator {
 	 **/
 	public function offsetGet( $offset ) {
 		// Remove the prefix
-		if( static::PREFIX && ( strpos( $offset, static::PREFIX ) === 0 ) )
+		if( static::PREFIX && ( strpos( $offset, static::PREFIX ) === 0 ) ) {
 			$offset	 =	substr( $offset, strlen( static::PREFIX ) );
+		}
 
 		return isset( $this->data[$offset] ) ? $this->data[$offset] : NULL;
 	}
@@ -100,20 +101,24 @@ abstract class Record implements \ArrayAccess, \Iterator {
 	 **/
 	public function offsetSet( $offset, $value ) {
 		// Only strings please
-		if( !is_string( $offset ) )
+		if( !is_string( $offset ) ) {
 			throw new \InvalidArgumentException( 'Argument 1 passed to ' . __METHOD__ . ' must be a string, ' . gettype( $offset ) . ' given' );
+		}
 
 		// Non-scalar values are not allowed
-		if( !is_scalar( $value ) && !is_null( $value ) )
+		if( !is_scalar( $value ) && !is_null( $value ) ) {
 			throw new \InvalidArgumentException( 'Argument 2 passed to ' . __METHOD__ . ' must be scalar or NULL, ' . gettype( $value ) . ' given' );
+		}
 
 		// Remove the prefix
-		if( static::PREFIX && ( strpos( $offset, static::PREFIX ) === 0 ) )
+		if( static::PREFIX && ( strpos( $offset, static::PREFIX ) === 0 ) ) {
 			$offset	 =	substr( $offset, strlen( static::PREFIX ) );
+		}
 
 		// Out-of-bound
-		if( ( $offset != static::PRIMARY_KEY ) && !$this->getSchemaInfo( $offset ) )
+		if( ( $offset != static::PRIMARY_KEY ) && !$this->getSchemaInfo( $offset ) ) {
         	throw new \OutOfBoundsException( "The offset {$offset} is out of bounds" );
+        }
 
 		 $this->data[$offset]	 =	$value;
 	}
@@ -123,11 +128,13 @@ abstract class Record implements \ArrayAccess, \Iterator {
 	 **/
 	public function offsetUnset( $offset ) {
 		// Remove the prefix
-		if( static::PREFIX && ( strpos( $offset, static::PREFIX ) === 0 ) )
+		if( static::PREFIX && ( strpos( $offset, static::PREFIX ) === 0 ) ) {
 			$offset	 =	substr( $offset, strlen( static::PREFIX ) );
+		}
 
-		if( isset( $this->data[$offset] ) )
+		if( isset( $this->data[$offset] ) ) {
 			unset( $this->data[$offset] );
+		}
 	}
 
 	/**
@@ -135,8 +142,9 @@ abstract class Record implements \ArrayAccess, \Iterator {
 	 **/
 	public function offsetExists( $offset ) {
 		// Remove the prefix
-		if( static::PREFIX && ( strpos( $offset, static::PREFIX ) === 0 ) )
+		if( static::PREFIX && ( strpos( $offset, static::PREFIX ) === 0 ) ) {
 			$offset	 =	substr( $offset, strlen( static::PREFIX ) );
+		}
 
 		return isset( $this->data[$offset] );
 	}
@@ -190,8 +198,9 @@ abstract class Record implements \ArrayAccess, \Iterator {
 	 * @return  boolean
 	 **/
 	public function isUpdated() {
-		if( static::PRIMARY_KEY )
+		if( static::PRIMARY_KEY ) {
 			return $this->offsetExists( static::PRIMARY_KEY );
+		}
 
 		return FALSE;
 	}
@@ -203,8 +212,9 @@ abstract class Record implements \ArrayAccess, \Iterator {
 	 * @return	array
 	 **/
 	public function compare( Record $record ) {
-		if( $this != $record )
+		if( $this != $record ) {
 			throw new \InvalidArgumentException( 'Argument 1 passed to ' . __METHOD__ . ' must be an instance of ' . get_class( $this ) . ', ' . get_class( $record ) . ' given' );
+		}
 
 		$difference	 =	array_diff_assoc( $this->data, $record->data );
 

@@ -22,14 +22,14 @@ class MySQL implements \Materia\Data\Storage {
     /**
      * Constructor
      *
-     * @param   string  $host           server's host name or IP address
      * @param   string  $username       user name to connect the server
      * @param   string  $password       password to connect the server
      * @param   string  $database       database's name
      * @param   string  $prefix         table prefix
+     * @param   string  $host           server's host name or IP address
      * @param   integer $port           port number
      **/
-    public function __construct( $host, $username, $password, $database, $prefix = '', $port = 3306 ) {
+    public function __construct( $database, $username, $password, $prefix = NULL, $host = 'localhost', $port = 3306 ) {
         $this->dsn       =  "mysql:dbname={$database};host={$host}";
         $this->username  =  $username;
         $this->password  =  $password;
@@ -48,7 +48,8 @@ class MySQL implements \Materia\Data\Storage {
                 $this->connection->setAttribute( \PDO::ATTR_AUTOCOMMIT, FALSE );
                 // $this->connection->setAttribute( PDO::ATTR_STATEMENT_CLASS, array( 'Materia\\Data\\Collections\\Statement', array( $this->connection ) ) );
             }
-        } catch( \PDOException $exception ) {
+        }
+        catch( \PDOException $exception ) {
             $this->connection    =  FALSE;
 
             throw new \Exception( $exception->getMessage() , (int) $exception->getCode() );
@@ -65,21 +66,23 @@ class MySQL implements \Materia\Data\Storage {
     /**
      * @see \Materia\Data\Storage::find()
      **/
-    public function find( \Materia\Data\Finder &$finder, array $fields = array() ) {
-        $data        =  array();
-        $where       =  array();
-        $order       =  array();
+    public function find( \Materia\Data\Finder &$finder, array $fields = [] ) {
+        $data        =  [];
+        $where       =  [];
+        $order       =  [];
         $limit       =  NULL;
         $filters     =  $finder->getFilters( TRUE );
         $record      =  $finder->getRecordClass();
         $table       =  $this->prefix . $finder->getRecordName();
 
         // Fields' list
-        if( !empty( $fields ) )
+        if( !empty( $fields ) ) {
             $fields  =  implode( ', ', $fields );
+        }
         // If no specific field(s), get everything
-        else
+        else {
             $fields  =  '*';
+        }
 
         // Where clause
         foreach( $filters->conditions as $index => $condition ) {
@@ -113,10 +116,12 @@ class MySQL implements \Materia\Data\Storage {
         }
 
         // Convert to string
-        if( !empty( $where ) )
+        if( !empty( $where ) ) {
             $where   =  ' WHERE ' . implode( ' ', $where );
-        else
+        }
+        else {
             $where   =  NULL;
+        }
 
         // Order by
         foreach( $filters->sorting as $field => $reverse ) {
@@ -124,14 +129,17 @@ class MySQL implements \Materia\Data\Storage {
         }
 
         // Convert ro string
-        if( !empty( $order ) )
+        if( !empty( $order ) ) {
             $order   =  ' ORDER BY ' . implode( ', ', $order );
-        else
+        }
+        else {
             $order   =  NULL;
+        }
 
         // Limit
-        if( !empty( $filters->paging ) )
+        if( !empty( $filters->paging ) ) {
             $limit   =  ' LIMIT ' . implode( ', ', $filters->paging );
+        }
 
         // Build and execute the query
         $query   =  trim( sprintf( 'SELECT %s FROM %s%s%s%s', $fields, $table, $where, $order, $limit ) ) . ';';
@@ -172,8 +180,8 @@ class MySQL implements \Materia\Data\Storage {
      * @see \Materia\Data\Storage::save()
      **/
     public function save( \Materia\Data\Record &$record ) {
-        $data    =  array();
-        $values  =  array();
+        $data    =  [];
+        $values  =  [];
         $table   =  $record->getRecordName();
         $pk      =  $record->getPrimaryKey();
 
@@ -183,10 +191,12 @@ class MySQL implements \Materia\Data\Storage {
                 $key         =  ":{$field}";
                 $data[$key]  =  $value;
 
-                if( $field == $pk )
+                if( $field == $pk ) {
                     $values[]    =  "{$field} = {$key}";
-                else
+                }
+                else {
                     $where       =  "{$field} = {$key}";
+                }
             }
 
             // Build and execute the query
@@ -264,7 +274,8 @@ class MySQL implements \Materia\Data\Storage {
             $stmt->execute( $data );
 
             $this->connection->commit();
-        } catch( \PDOException $exception ) {
+        }
+        catch( \PDOException $exception ) {
             $this->connection->rollBack();
 
             throw new \Exception( $exception->getMessage() , (int) $exception->getCode() );
@@ -282,25 +293,31 @@ class MySQL implements \Materia\Data\Storage {
      * @return      string
      **/
     static protected function showQuery( $query, $data ) {
-        $keys    =  array();
-        $values  =  array();
+        $keys    =  [];
+        $values  =  [];
 
         foreach( $data as $key => $value ) {
             // Check if named parameters (":param") or anonymous parameters ("?"") are used
-            if( is_string( $key ) )
+            if( is_string( $key ) ) {
                 $keys[]      =  '/' . ( ( $key{0} == ':' ) ? '' : ':' ) . $key . '/';
-            else
+            }
+            else {
                 $keys[]      =  '/[?]/';
+            }
 
             // Bring parameter into human-readable format
-            if( is_string( $value ) )
+            if( is_string( $value ) ) {
                 $values[]    =  "'" . str_replace( "'", "''", $value ) . "'";
-            else if( is_array( $value ) )
+            }
+            else if( is_array( $value ) ) {
                 $values[]    =  implode( ',', $value );
-            else if ( is_null( $value ) )
+            }
+            else if ( is_null( $value ) ) {
                 $values[]    =  'NULL';
-            else
+            }
+            else {
                 $values[]    =  (string) $value;
+            }
         }
 
         $query   =  preg_replace( $keys, $values, $query, 1, $count );

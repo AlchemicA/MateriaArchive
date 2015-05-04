@@ -12,8 +12,8 @@ namespace Materia\Network;
 
 class Router {
 
-    protected $routes        =  array();
-    protected $closures      =  array();
+    protected $routes        =  [];
+    protected $closures      =  [];
 
     /**
      * Set a route
@@ -87,7 +87,7 @@ class Router {
      * @return  mixed
      **/
     public function processRequest( Request &$request ) {
-        $params  =  array();
+        $params  =  [];
         $method  =  $request->getMethod();
         $path    =  $request->getPath();
 

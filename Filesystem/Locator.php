@@ -17,26 +17,39 @@ class Locator {
 
     protected $files     =  [];
     protected $paths     =  [];
+    protected $debug     =  [];
 
     /**
      * Constructor
      *
-     * @param   \SplFileInfo    $chroot     base path
-     * @param   boolean         $register   register $chroot as path
+     * @param   string  $chroot     base path (chroot)
+     * @param   boolean $register   register $chroot as path
      **/
-    public function __construct( \SplFileInfo $chroot, $register = FALSE ) {
-        if( !$chroot->isDir() ) {
-            throw new \InvalidArgumentException( sprintf( 'Invalid base path %s', $chroot->getRealPath() ) );
+    public function __construct( $chroot, $register = FALSE ) {
+        if( !is_string( $chroot ) ) {
+            throw new \InvalidArgumentException( sprintf( 'Argument 1 passed to %s must be a string, %s given', __FUNCTION__, gettype( $chroot ) ) );
         }
 
-        if( !$chroot->isReadable() ) {
-            throw new \InvalidArgumentException( sprintf( 'Path %s is not readable', $chroot->getRealPath() ) );
+        $chroot  =  realpath( $chroot );
+
+        // Check if is a valid directory
+        if( !is_dir( $chroot ) ) {
+            $this->logMessage( 'Invalid path: %s' , [ $path ] );
+
+            throw new \InvalidArgumentException( sprintf( 'Invalid base path %s', $chroot ) );
+        }
+
+        // Check if it's readable
+        if( !is_readable( $chroot ) ) {
+            $this->logMessage( '%s not accessible' , [ $path ] );
+
+            throw new \InvalidArgumentException( sprintf( 'Path %s is not readable', $chroot ) );
         }
 
         // Normalize path
-        $this->chroot    =  rtrim( $chroot->getRealPath(), DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR;
+        $this->chroot    =  rtrim( $chroot, DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR;
 
-        // Register $chroot as path
+        // Register path
         if( $register ) {
             $this->setPath( $chroot );
         }
@@ -45,39 +58,37 @@ class Locator {
     /**
      * Adds a base directory for a namespace prefix
      *
-     * @param   SplFileInfo $info       path for the given namespace or file
-     * @param   string      $prefix     the namespace prefix
+     * @param   string  $info       path for the given namespace or file
+     * @param   string  $prefix     the namespace prefix
      * @return  self
      **/
-    public function setPath( \SplFileInfo $info, $priority = 0, $prefix = '\\' ) {
-        if( !$info->isReadable() ) {
+    public function setPath( $path, $prefix = '\\' ) {
+        $path    =  realpath( $path );
+
+        // Check if the resource is accessible
+        if( !is_readable( $path ) ) {
+            $this->logMessage( '%s not accessible' , [ $path ] );
+
             return $this;
-        }
-
-        if( !is_int( $priority ) ) {
-            $priority    =  0;
-        }
-
-        // Normalize path
-        if( $info->isDir() ) {
-            $path    =  rtrim( $info->getRealPath(), DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR;
-        }
-        else {
-            $path    =  $info->getRealPath();
         }
 
         // Disallowed path
         if( strpos( $path, $this->chroot ) !== 0 ) {
+            $this->logMessage( 'Invalid path: %s' , [ $path ] );
+
             return $this;
         }
 
-        if( $info->isDir() ) {
+        if( is_dir( $path ) ) {
+            // Normalize path
+            $path    =  rtrim( $path, DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR;
+
             // Normalize the namespace prefix
             $prefix  =  trim( $prefix, '\\' ) . '\\';
 
             // Initialize the namespace prefix array if needed
             if( !isset( $this->paths[$prefix] ) ) {
-                $this->paths[$prefix]    =  array();
+                $this->paths[$prefix]    =  [];
             }
 
             // Add if not present
@@ -157,13 +168,13 @@ class Locator {
                     }
 
                     // Not in the base directory
-                    $this->logMessage( '%s: %s not found', array( $prefix, $file ) );
+                    $this->logMessage( '%s: %s not found or not readable', [ $prefix, $file ] );
                 }
             }
         }
 
         // Did not find any file
-        $this->logMessage( '%s not loaded', array( $filename ) );
+        $this->logMessage( '%s not loaded', [ $filename ] );
 
         return FALSE;
     }
@@ -186,8 +197,9 @@ class Locator {
      * @see \Materia\Debug\Logger::setMessage()
      **/
     protected function logMessage( $message, array $params = [] ) {
-        if( isset( $this->logger ) )
+        if( isset( $this->logger ) ) {
             $this->logger->logMessage( \Materia\Debug\Logger::INFO, $message, $params );
+        }
     }
 
     /**

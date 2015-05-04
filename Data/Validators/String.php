@@ -17,7 +17,7 @@ class String implements \Materia\Data\Validator {
     const URL            =  'url';
     const IP_ADDRESS     =  'ip';
 
-    protected $conditions    =  array();
+    protected $conditions    =  [];
     protected $strict        =  FALSE;
 
     /**
@@ -34,12 +34,14 @@ class String implements \Materia\Data\Validator {
      **/
     public function isValid( $value, $default = FALSE ) {
         if( $this->strict ) {
-            if( !is_string( $value ) && !is_null( $value ) )
+            if( !is_string( $value ) && !is_null( $value ) ) {
                 return FALSE;
+            }
         }
         else {
-            if( !is_scalar( $value ) && !is_null( $value ) )
+            if( !is_scalar( $value ) && !is_null( $value ) ) {
                 return FALSE;
+            }
         }
 
        foreach( $this->conditions as $key => $condition ) {
@@ -50,40 +52,46 @@ class String implements \Materia\Data\Validator {
                     // Convert numeric, boolean and NULL to string
                     $length  =  mb_strlen( "{$value}" );
 
-                    if( !( ( $length >= $min ) && ( $length <= $max ) ) )
+                    if( !( ( $length >= $min ) && ( $length <= $max ) ) ) {
                         return FALSE;
+                    }
 
                     break;
 
                 case 'regex':
-                    if( !preg_match( $condition, $value ) )
+                    if( !preg_match( $condition, $value ) ) {
                         return FALSE;
+                    }
 
                     break;
 
                 case 'is':
                     switch( $condition ) {
                         case self::ALPHANUMERIC:
-                            if( preg_match( '#[^a-z0-9]#is', $value ) )
+                            if( preg_match( '#[^a-z0-9]#is', $value ) ) {
                                 return FALSE;
+                            }
 
                             break;
 
                         case self::EMAIL:
-                            if( !filter_var( $value, FILTER_VALIDATE_EMAIL ) )
+                            if( !filter_var( $value, FILTER_VALIDATE_EMAIL ) ) {
                                 return FALSE;
+                            }
 
                             break;
 
                         case self::URL:
-                            if( !filter_var( $value, FILTER_VALIDATE_URL ) )
+                            if( !filter_var( $value, FILTER_VALIDATE_URL ) ) {
                                 return FALSE;
+                            }
 
                             break;
 
                         case self::IP_ADDRESS:
-                            if( !filter_var( $value, FILTER_VALIDATE_IP, ( FILTER_FLAG_IPV4 | FILTER_FLAG_IPV6 ) ) )
+                            if( !filter_var( $value, FILTER_VALIDATE_IP, ( FILTER_FLAG_IPV4 | FILTER_FLAG_IPV6 ) ) ) {
                                 return FALSE;
+                            }
 
                             break;
                     }
@@ -102,7 +110,7 @@ class String implements \Materia\Data\Validator {
      * @param   integer $max    maximum allowed value
      **/
     public function length( $min, $max ) {
-        $this->conditions['length']  =  array( intval( $min ), intval( $max ) );
+        $this->conditions['length']  =  [ intval( $min ), intval( $max ) ];
     }
 
     /**

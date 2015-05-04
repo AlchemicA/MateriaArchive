@@ -12,7 +12,7 @@ namespace Materia\Core\Observer;
 
 class Subject implements \SplSubject {
 
-    protected $observers     =  [];
+    protected $storage   =  [];
 
     /**
      * Attach a new observer
@@ -20,7 +20,7 @@ class Subject implements \SplSubject {
      * @param   \SplObserver    $observer
      **/
     public function attach( \SplObserver $observer ) {
-        $this->observers[]   =  $observer;
+        $this->storage[]     =  $observer;
     }
 
     /**
@@ -29,8 +29,8 @@ class Subject implements \SplSubject {
      * @param   \SplObserver    $observer
      **/
     public function detach( \SplObserver $observer ) {
-        if( $index = array_search( $observer, $this->observers ) ) {
-            unset( $this->observers[$index] );
+        if( $index = array_search( $observer, $this->storage ) ) {
+            unset( $this->storage[$index] );
         }
     }
 
@@ -38,7 +38,7 @@ class Subject implements \SplSubject {
      * Notify observers
      **/
     public function notify() {
-        foreach( $this->observers as &$observer ) {
+        foreach( $this->storage as &$observer ) {
             $observer->update( $this );
         }
     }

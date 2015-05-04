@@ -126,8 +126,9 @@ class SMTP implements \Materia\Mail\Sender {
      * @see \Materia\Mailer\Sender::setParameter()
      **/
     public function setParameter( $param , $value ) {
-        if( is_string( $param ) )
+        if( is_string( $param ) ) {
             $this->params[$param]    =  $value;
+        }
 
         return $this;
     }

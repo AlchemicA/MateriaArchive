@@ -24,11 +24,13 @@ class Finder {
      * @param   string  $record     kind of record
      **/
     public function __construct( $record ) {
-        if( !is_string( $record ) )
+        if( !is_string( $record ) ) {
             throw new \InvalidArgumentException( 'Argument 1 passed to ' . __METHOD__ . ' must be a string, ' . gettype( $record ) . ' given' );
+        }
 
-        if( !is_subclass_of( $record, '\Materia\Data\Record' ) )
+        if( !is_subclass_of( $record, '\Materia\Data\Record' ) ) {
             throw new \InvalidArgumentException( 'Argument 1 passed to ' . __METHOD__ . ' must be a subclass of \Materia\Data\Record, ' . $record . ' given' );
+        }
 
         // Store the record's information
         $this->record    =  $record;
@@ -97,7 +99,7 @@ class Finder {
      * @return  $this
      **/
     public function page( $count, $offset = 0 ) {
-        $this->filters->paging   =  array( intval( $count ), intval( $offset ) );
+        $this->filters->paging   =  [ intval( $count ), intval( $offset ) ];
 
         return $this;
     }
@@ -111,8 +113,9 @@ class Finder {
      **/
     public function sort( $field, $reverse = FALSE ) {
         // Prepend prefix to field name
-        if( $this->prefix && ( strpos( $field, $this->prefix ) !== 0 ) )
+        if( $this->prefix && ( strpos( $field, $this->prefix ) !== 0 ) ) {
             $field   =  $this->prefix . $offset;
+        }
 
         $this->filters->sorting[$field]  =  $reverse ? TRUE : FALSE;
 
@@ -128,8 +131,9 @@ class Finder {
      **/
     private function setCondition( $field, $operator, $value ) {
         // To set a condition, the collection should be empty
-        if( !empty( $this->storage ) )
-            throw new Exception( "Error Processing Request" );
+        if( !empty( $this->storage ) ) {
+            throw new \Exception( "Error Processing Request" );
+        }
 
         switch( $operator ) {
             // Greater
@@ -140,26 +144,34 @@ class Finder {
             case '<':
             // Lower or equal
             case '<=':
-                if( !is_numeric( $value ) )
+                if( !is_numeric( $value ) ) {
                     throw new \InvalidArgumentException( 'Argument 2 passed to ' . __METHOD__ . ' must be a number, ' . gettype( $value ) . ' given' );
+                }
+
                 break;
 
             // Equal
             case '=':
-                if( !is_scalar( $value ) && !is_array( $value ) )
+                if( !is_scalar( $value ) && !is_array( $value ) ) {
                     throw new \InvalidArgumentException( 'Argument 2 passed to ' . __METHOD__ . ' must be scalar or an array, ' . gettype( $value ) . ' given' );
+                }
+
                 break;
 
             // Not equal
             case '!=':
-                if( !is_scalar( $value ) && !is_array( $value ) )
+                if( !is_scalar( $value ) && !is_array( $value ) ) {
                     throw new \InvalidArgumentException( 'Argument 2 passed to ' . __METHOD__ . ' must be scalar or an array, ' . gettype( $value ) . ' given' );
+                }
+
                 break;
 
             // Range
             case '<>':
-                if( !is_array( $value ) || ( count( $value ) != 2 ) )
+                if( !is_array( $value ) || ( count( $value ) != 2 ) ) {
                     throw new \InvalidArgumentException( 'Argument 2 passed to ' . __METHOD__ . ' must be an array, ' . gettype( $value ) . ' given' );
+                }
+
                 break;
 
             default:
@@ -168,21 +180,22 @@ class Finder {
         }
 
         // Prepend prefix to field name
-        if( $this->prefix && ( strpos( $field, $this->prefix ) !== 0 ) )
+        if( $this->prefix && ( strpos( $field, $this->prefix ) !== 0 ) ) {
             $field   =  $this->prefix . $field;
+        }
 
-        $this->filters->conditions[]     =  array( $field, $operator, $value );
+        $this->filters->conditions[]     =  [ $field, $operator, $value ];
     }
 
     /**
      * Reset filters
      **/
     public function resetFilters() {
-        $filters     =  array(
-            'conditions'    =>  array(),
-            'paging'        =>  array(),
-            'sorting'       =>  array(),
-        );
+        $filters     =  [
+            'conditions'    =>  [],
+            'paging'        =>  [],
+            'sorting'       =>  [],
+        ];
 
         $this->filters   =  new \ArrayObject( $filters, \ArrayObject::ARRAY_AS_PROPS );
     }

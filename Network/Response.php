@@ -17,7 +17,7 @@ class Response {
 	protected $body;
 	protected $formatter;
 
-	protected static $codes	 =	array(
+	protected static $codes	 =	[
 		200  =>  'OK',
 		201  =>  'Created',
 		202  =>  'Accepted',
@@ -58,7 +58,7 @@ class Response {
 		503  =>  'Service Unavailable',
 		504  =>  'Gateway Timeout',
 		505  =>  'HTTP Version Not Supported'
-	);
+	];
 
 	/**
 	 * Constructor
@@ -145,10 +145,12 @@ class Response {
 		}
 
 		if( $this->body && $append ) {
-			if( is_null( $body ) || is_scalar( $body ) )
+			if( is_null( $body ) || is_scalar( $body ) ) {
 				$this->body	.=  $body;
-			else if( isset( $this->formatter ) )
+			}
+			else if( isset( $this->formatter ) ) {
 				$this->body	 =	$this->formatter->merge( $this->body, $body );
+			}
 		}
 		else {
 			$this->body	 =	$body;
@@ -172,7 +174,7 @@ class Response {
 	 * @return	$this
 	 **/
 	public function reset() {
-		$this->headers   =  array();
+		$this->headers   =  [];
 		$this->status    =  200;
 		$this->body      =  NULL;
 
@@ -188,11 +190,11 @@ class Response {
 	public function setCache( $expires ) {
 		if( $expires === FALSE ) {
 			$this->headers['Expires']        =  'Mon, 26 Jul 1997 05:00:00 GMT';
-			$this->headers['Cache-Control']  =  array(
+			$this->headers['Cache-Control']  =  [
 				'no-store, no-cache, must-revalidate',
 				'post-check=0, pre-check=0',
 				'max-age=0'
-			);
+			];
 			$this->headers['Pragma']         =  'no-cache';
 		}
 		else {
@@ -209,8 +211,9 @@ class Response {
 	 * Sends the response to output and exit
 	 */
 	public function send() {
-		if( ob_get_length() > 0 )
+		if( ob_get_length() > 0 ) {
 			ob_end_clean();
+		}
 
 		if( !headers_sent() ) {
 			foreach( $this->headers as $key => $value ) {

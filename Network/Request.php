@@ -35,26 +35,32 @@ class Request {
 		$this->ajax		 =	isset( $_SERVER['HTTP_X_REQUESTED_WITH'] ) ? ( $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest' ) : FALSE;
 
 		if( $globals ) {
-			if( isset( $_SERVER['SERVER_PROTOCOL'] )  && ( strpos( $_SERVER['SERVER_PROTOCOL'], 'HTTPS' ) !== FALSE ) )
+			if( isset( $_SERVER['SERVER_PROTOCOL'] )  && ( strpos( $_SERVER['SERVER_PROTOCOL'], 'HTTPS' ) !== FALSE ) ) {
 				$this->setScheme( 'https' );
+			}
 
-			if( isset( $_SERVER['HTTP_HOST'] ) )
+			if( isset( $_SERVER['HTTP_HOST'] ) ) {
 				$this->setHost( $_SERVER['HTTP_HOST'] );
+			}
 
-			if( isset( $_SERVER['REQUEST_METHOD'] ) )
+			if( isset( $_SERVER['REQUEST_METHOD'] ) ) {
 				$this->setMethod( $_SERVER['REQUEST_METHOD'] );
+			}
 
-			if( isset( $_SERVER['SERVER_PORT'] ) )
+			if( isset( $_SERVER['SERVER_PORT'] ) ) {
 				$this->setPort( $_SERVER['SERVER_PORT'] );
+			}
 
 			if( isset( $_SERVER['REQUEST_URI'] ) ) {
 				$script	 =	str_replace( '\\', '/', $_SERVER['SCRIPT_NAME'] );
 				$pos	 =	$script ? strpos( $_SERVER['REQUEST_URI'], $script ) : FALSE;
 
-				if( $pos === 0 )
+				if( $pos === 0 ) {
 					$this->setPath( substr( $_SERVER['REQUEST_URI'], strlen( $script ) ) );
-				else
+				}
+				else {
 					$this->setPath( $_SERVER['REQUEST_URI'] );
+				}
 			}
 
 			if( isset( $_SERVER['QUERY_STRING'] ) ) {
@@ -63,8 +69,9 @@ class Request {
 				$this->setData( $query );
 			}
 
-			if( isset( $_SERVER['HTTP_USER_AGENT'] ) )
+			if( isset( $_SERVER['HTTP_USER_AGENT'] ) ) {
 				$this->setUserAgent( $_SERVER['HTTP_USER_AGENT'] );
+			}
 		}
 	}
 
@@ -117,7 +124,7 @@ class Request {
 	 * @return	$this
 	 **/
 	public function setScheme( $scheme ) {
-		if( in_array( $scheme, array( 'http', 'https' ) ) )
+		if( in_array( $scheme, [ 'http', 'https' ] ) )
 			$this->scheme	 =	$scheme;
 
 		return $this;
@@ -153,7 +160,7 @@ class Request {
 	 * @return	$this
 	 **/
 	public function setMethod( $method ) {
-		if( in_array( $method, array( 'GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS' ) ) )
+		if( in_array( $method, [ 'GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS' ] ) )
 			$this->method	 =	$method;
 
 		return $this;
@@ -282,32 +289,39 @@ class Request {
 	public function buildURL() {
 		$url	 =	NULL;
 
-		if( isset( $this->scheme ) )
+		if( isset( $this->scheme ) ) {
 			$url	.=	$this->scheme . '://';
+		}
 
 		if( isset( $this->user ) ) {
 			$url	.=	$this->user;
 
-			if( isset( $this->pass ) && $this->pass )
+			if( isset( $this->pass ) && $this->pass ) {
 				$url	.=	':' . $this->pass;
+			}
 
 			$url	.=	'@';
 		}
 
-		if( isset( $this->host ) )
+		if( isset( $this->host ) ) {
 			$url	.=	rtrim( $this->host, '/' );
+		}
 
-		if( isset( $this->port ) && $this->port )
+		if( isset( $this->port ) && $this->port ) {
 			$url	.=	':' . $this->port;
+		}
 
-		if( isset( $this->path ) && $this->path )
+		if( isset( $this->path ) && $this->path ) {
 			$url	.=	'/' . ltrim( $this->path, '/' );
+		}
 
-		if( !in_array( $this->method, array( 'POST', 'PUT' ) ) && isset( $this->data ) && $this->data )
+		if( !in_array( $this->method, array( 'POST', 'PUT' ) ) && isset( $this->data ) && $this->data ) {
 			$url	.=	'?' . http_build_query( $this->data );
+		}
 
-		if( isset( $this->fragment ) && $this->fragment )
+		if( isset( $this->fragment ) && $this->fragment ) {
 			$url	.=	'#' . $this->fragment;
+		}
 
 		return $url;
 	}

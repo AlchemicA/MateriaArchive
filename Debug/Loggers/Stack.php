@@ -12,7 +12,7 @@ namespace Materia\Debug\Loggers;
 
 class Stack implements \IteratorAggregate, \Materia\Debug\Logger {
 
-    private $loggers     =  array();
+    private $loggers     =  [];
 
     /**
      * Append a new logger to the list of active loggers
@@ -45,7 +45,7 @@ class Stack implements \IteratorAggregate, \Materia\Debug\Logger {
      **/
     public function logMessage( $level, $message = NULL ) {
         foreach( $this->loggers as $logger ) {
-            call_user_func_array( array( $logger, 'logMessage' ), func_get_args() );
+            call_user_func_array( [ $logger, 'logMessage' ], func_get_args() );
         }
 
         return $this;

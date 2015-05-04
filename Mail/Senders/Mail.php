@@ -27,8 +27,9 @@ class Mail implements \Materia\Mail\Sender {
 		$to        =  $message->getTo();
 		$headers   =  $message->getHeaders( TRUE );
 
-		if( empty( $to ) )
+		if( empty( $to ) ) {
 			return FALSE;
+		}
 
 		return @mail( join( ',', $to ), $message->subject, $message, $headers, $this->params );
 	}

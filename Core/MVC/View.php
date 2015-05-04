@@ -27,15 +27,6 @@ class View {
     }
 
     /**
-     * Returns asset URL
-     *
-     * @param   string  $resource
-     **/
-    public function asset( $resource ) {
-        return ( $_SERVER['HTTPS'] ? 'https://' : 'http://' ) . $_SERVER['HTTP_HOST'] . '/' . ltrim( $resource, '/' );
-    }
-
-    /**
      * Render a template
      *
      * @param   string  $template

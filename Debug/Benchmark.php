@@ -12,7 +12,7 @@ namespace Materia\Debug;
 
 class Benchmark {
 
-	protected $data	 =	array();
+	protected $data	 =	[];
 
 	private $formater;
 
@@ -35,12 +35,12 @@ class Benchmark {
 	 * @return	$this
 	 **/
 	public function step( $label ) {
-		$this->data[$label]	 =	array(
+		$this->data[$label]	 =	[
 			'time'		=>	microtime( TRUE ),
 			'memory'	=>	memory_get_usage(),
 			'peak'		=>	memory_get_peak_usage(),
 			'usage'		=>	getrusage(),
-		);
+		];
 
 		return $this;
 	}
@@ -58,16 +58,18 @@ class Benchmark {
 		// Get memory limit
 		$mlimit		 =	ini_get( 'memory_limit' );
 
-		if( strpos( $mlimit, 'M' ) )
+		if( strpos( $mlimit, 'M' ) ) {
 			$mlimit		 =	str_replace( 'M', '', $mlimit ) * 1024 * 1024;
-		else if( strpos( $mlimit, 'G' ) )
+		}
+		else if( strpos( $mlimit, 'G' ) ) {
 			$mlimit		 =	str_replace( 'G', '', $mlimit ) * 1024 * 1024 * 1024;
+		}
 
 		$primary	 =	$this->data[$primary];
 		$secondary	 =	$this->data[$secondary];
 		$usage		 =	$this->getUsageDifference( $primary['usage'], $secondary['usage'] );
 
-		$result	 =	array(
+		$result	 =	[
 			'time'			=>	$secondary['time'] - $primary['time'],	// Clock time in seconds (with miscoseconds)
 			'utime'			=>	$usage['ru_utime.tv'], // Time taken in User Mode in seconds (with miscoseconds)
 			'stime'			=>	$usage['ru_stime.tv'],	//Time taken in System Mode in seconds (with miscoseconds)
@@ -79,12 +81,14 @@ class Benchmark {
 			'musage'		=>	$secondary['memory'] - $primary['memory'],	// Memory usage
 			'mpeak'			=>	$secondary['peak'] - $primary['peak'],	// Peak memory usage
 			'load'			=>	$load['0'],	// Average server load in last minute
-		);
+		];
 
-		if( isset( $this->formatter ) )
+		if( isset( $this->formatter ) ) {
 			return $this->formatter->encode( $result );
-		else
+		}
+		else {
 			return $result;
+		}
 	}
 
 	/**
@@ -95,7 +99,7 @@ class Benchmark {
 	 * @return	array
 	 **/
 	private function getUsageDifference( array $primary, array $secondary ) {
-		$array	 =	array();
+		$array	 =	[];
 
 		// Add user mode time
 		$primary['ru_utime.tv']		 =	( $primary['ru_utime.tv_usec'] / 1000000 ) + $primary['ru_utime.tv_sec'];
