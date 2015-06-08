@@ -74,7 +74,7 @@ class Response {
 	 * Sets the HTTP status of the response
 	 *
 	 * @param	integer	$code	HTTP status code
-	 * @return	$this
+	 * @return	self
 	 **/
 	public function setStatus( $status ) {
 		if( array_key_exists( $status, self::$codes ) ) {
@@ -93,11 +93,20 @@ class Response {
 	}
 
 	/**
+	 * Gets the HTTP status of the response
+	 *
+	 * @return	integer	$code	HTTP status code
+	 **/
+	public function getStatus() {
+		return $this->status;
+	}
+
+	/**
 	 * Set a response header
 	 *
 	 * @param	mixed	$name	header name or array of names and values
 	 * @param	string	$value	header value
-	 * @return	$this
+	 * @return	self
 	 **/
 	public function setHeader( $name, $value = NULL ) {
 		$this->headers[$name]  =  $value;
@@ -109,7 +118,7 @@ class Response {
 	 * Set multiple response headers
 	 *
 	 * @param	array	$headers	associative array of headers
-	 * @return	$this
+	 * @return	self
 	 **/
 	public function setHeaders( array $headers ) {
 		foreach( $headers as $key => $value ) {
@@ -123,7 +132,7 @@ class Response {
 	 * Set formatter
 	 *
 	 * @param	\Materia\Data\Formatter	$formatter		data formatter instance
-	 * @return	$this
+	 * @return	self
 	 **/
 	public function setFormatter( \Materia\Data\Formatter $formatter ) {
 		$this->formatter	 =	$formatter;
@@ -136,7 +145,7 @@ class Response {
 	 *
 	 * @param	mixed	$body		response content
 	 * @param	boolean	$append		whatever append or not
-	 * @return	$this
+	 * @return	self
 	 **/
 	public function setBody( $body, $append = TRUE ) {
 		// Decode if necessary
@@ -145,9 +154,11 @@ class Response {
 		}
 
 		if( $this->body && $append ) {
+			// Append scalar values
 			if( is_null( $body ) || is_scalar( $body ) ) {
 				$this->body	.=  $body;
 			}
+			// Otherwise merge with the given formatter
 			else if( isset( $this->formatter ) ) {
 				$this->body	 =	$this->formatter->merge( $this->body, $body );
 			}
@@ -162,16 +173,22 @@ class Response {
 	/**
 	 * Get response body
 	 *
+	 * @param	boolean	$encoded		if TRUE, returns encoded body value
 	 * @return	mixed
 	 **/
-	public function getBody( $encode = FALSE ) {
-		return ( $encode && isset( $this->formatter ) ) ? $this->formatter->encode( $this->body ) : $this->body;
+	public function getBody( $encoded = FALSE ) {
+		if( $encoded && isset( $this->formatter ) ) {
+			return ( !is_null( $this->body ) && !is_scalar( $this->body ) ) ? $this->formatter->encode( $this->body ) : $this->body;
+		}
+		else {
+			return $this->body;
+		}
 	}
 
 	/**
 	 * Reset the response
 	 *
-	 * @return	$this
+	 * @return	self
 	 **/
 	public function reset() {
 		$this->headers   =  [];
@@ -185,7 +202,7 @@ class Response {
 	 * Sets caching headers for the response
 	 *
 	 * @param	mixed	$expires	expiration time
-	 * @return	$this
+	 * @return	self
 	 **/
 	public function setCache( $expires ) {
 		if( $expires === FALSE ) {
@@ -211,10 +228,12 @@ class Response {
 	 * Sends the response to output and exit
 	 */
 	public function send() {
+		// Clean output buffer
 		if( ob_get_length() > 0 ) {
 			ob_end_clean();
 		}
 
+		// Headers
 		if( !headers_sent() ) {
 			foreach( $this->headers as $key => $value ) {
 				if( is_array( $value ) ) {
@@ -232,18 +251,11 @@ class Response {
 	}
 
 	/**
-	 * Stops and outputs the current response
-	 */
-	public function stop() {
-		$this->write( ob_get_clean() )->send();
-	}
-
-	/**
-	 * Stops processing and returns a given response.
+	 * Stops processing and returns a given response
 	 *
-	 * @param int $code HTTP status code
-	 * @param int $message Response message
-	 */
+	 * @param integer	$code		HTTP status code
+	 * @param integer	$message	response message
+	 **/
 	public function halt( $code = 200, $message = NULL ) {
 		$this
 			->clear()
@@ -256,7 +268,8 @@ class Response {
 	/**
 	 * Redirects the current request to specific URL
 	 *
-	 * @param string $url URL
+	 * @param	string	$url	URL
+	 * @param	integer	$code	HTTP status code
 	 **/
 	public function redirect( $url, $code = 303 ) {
 		$this

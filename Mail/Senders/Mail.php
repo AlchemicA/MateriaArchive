@@ -25,13 +25,13 @@ class Mail implements \Materia\Mail\Sender {
 	 **/
 	public function send( \Materia\Mail\Message &$message ) {
 		$to        =  $message->getTo();
-		$headers   =  $message->getHeaders( TRUE );
+		$headers   =  $message->getHeaders();
 
 		if( empty( $to ) ) {
 			return FALSE;
 		}
 
-		return @mail( join( ',', $to ), $message->subject, $message, $headers, $this->params );
+		return mail( join( ',', $to ), $message->getSubject(), $message->build(), NULL, $this->params );
 	}
 
 	/**

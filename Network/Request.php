@@ -266,7 +266,7 @@ class Request {
 	 * @param	Response	$response	Response instance
 	 * @return	$this
 	 **/
-	public function setResponse( Response $response ) {
+	public function setResponse( Response &$response ) {
 		$this->response	 =	$response;
 
 		return $this;

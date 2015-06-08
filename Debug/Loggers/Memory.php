@@ -12,20 +12,13 @@ namespace Materia\Debug\Loggers;
 
 class Memory implements \Materia\Debug\Logger {
 
-    private $queue;
-
-    /**
-     * Constructor
-     */
-    public function __construct() {
-        $this->queue     =  new \SplPriorityQueue();
-    }
+    private $messages    =  [];
 
     /**
      * @see \Materia\Debug\Logger::logMessage()
      **/
-    public function logMessage( $level, $message = NULL ) {
-        $this->queue->insert( $message, $level );
+    public function logMessage( $type, $severity = self::SEVERITY_INFO, $message = NULL ) {
+        $this->messages[$type][$severity][]  =  $message;
 
         return $this;
     }

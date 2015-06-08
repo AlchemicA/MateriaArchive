@@ -31,13 +31,13 @@ class Cron {
 	 *
 	 * @param   string  $path               local path where to store .lock files
 	 **/
-	public function __construct( \SplFileInfo $path ) {
-		if( !$path->isDir() ) {
+	public function __construct( $path ) {
+		if( !is_dir( $path ) ) {
 			throw new \InvalidArgumentException( 'Argument 1 passed to ' . __METHOD__ . ' must be a valid path' );
 		}
 
 		// Normalize path
-		$this->path      =  rtrim( $path->getRealPath(), DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR;
+		$this->path      =  rtrim( realpath( $path ), DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR;
 		$this->tasks	 =	new \ArrayObject( [], \ArrayObject::ARRAY_AS_PROPS );
 	}
 

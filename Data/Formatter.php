@@ -16,7 +16,7 @@ interface Formatter {
      * Encode to string
      *
      * @param   array   $data       array to be encoded
-     * @return  string
+     * @return  mixed               encoded data into string or FALSE on error
      **/
     public function encode( array $data );
 
@@ -24,7 +24,7 @@ interface Formatter {
      * Decode from string
      *
      * @param   string  $data       encoded string
-     * @return  array
+     * @return  mixed               decoded string into array or FALSE on error
      **/
     public function decode( $data );
 
@@ -33,8 +33,15 @@ interface Formatter {
      *
      * @param   mixed   $one        first entity to merge
      * @param   mixed   $two        second entity to merge
-     * @return  mixed
+     * @return  mixed               merged entities or FALSE on error
      **/
     public function merge( $one, $two );
+
+    /**
+     * Returns latest error
+     *
+     * @return  mixed               latest error code of FALSE if none
+     **/
+    public function getError();
 
 }

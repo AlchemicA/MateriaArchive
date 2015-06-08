@@ -16,7 +16,7 @@ abstract class Record implements \ArrayAccess, \Iterator {
 	const PREFIX		 =	NULL;
 	const PRIMARY_KEY	 =	NULL;
 
-	protected $data	 =	array();
+	protected $data	 =	[];
 
 	/**
 	 * Constructor
@@ -35,7 +35,7 @@ abstract class Record implements \ArrayAccess, \Iterator {
 	 * Object cloning
 	 **/
 	public function __clone() {
-		$this->data	 =	[];
+		$this->offsetUnset( static::PRIMARY_KEY );
 	}
 
 	/**
@@ -81,7 +81,7 @@ abstract class Record implements \ArrayAccess, \Iterator {
 	 * Return the string representation of the record
 	 **/
 	public function __toString() {
-		return get_class( $this );
+		return isset( $this->data[static::PRIMARY_KEY] ) ? $this->data[static::PRIMARY_KEY] : NULL;
 	}
 
 	/**
@@ -106,7 +106,7 @@ abstract class Record implements \ArrayAccess, \Iterator {
 		}
 
 		// Non-scalar values are not allowed
-		if( !is_scalar( $value ) && !is_null( $value ) ) {
+		if( !is_scalar( $value ) && !is_null( $value ) && !( $value instanceof Record ) ) {
 			throw new \InvalidArgumentException( 'Argument 2 passed to ' . __METHOD__ . ' must be scalar or NULL, ' . gettype( $value ) . ' given' );
 		}
 
@@ -116,7 +116,7 @@ abstract class Record implements \ArrayAccess, \Iterator {
 		}
 
 		// Out-of-bound
-		if( ( $offset != static::PRIMARY_KEY ) && !$this->getSchemaInfo( $offset ) ) {
+		if( ( $offset != static::PRIMARY_KEY ) && !$this->getInfo( $offset ) ) {
         	throw new \OutOfBoundsException( "The offset {$offset} is out of bounds" );
         }
 
@@ -160,7 +160,7 @@ abstract class Record implements \ArrayAccess, \Iterator {
 	 * @see	Iterator::key()
 	 **/
 	public function key() {
-		return key( $this->data );
+		return static::PREFIX . key( $this->data );
 	}
 
 	/**
@@ -212,11 +212,24 @@ abstract class Record implements \ArrayAccess, \Iterator {
 	 * @return	array
 	 **/
 	public function compare( Record $record ) {
-		if( $this != $record ) {
+		// We can only compare the same Records
+		if( get_class( $this ) != get_class( $record ) ) {
 			throw new \InvalidArgumentException( 'Argument 1 passed to ' . __METHOD__ . ' must be an instance of ' . get_class( $this ) . ', ' . get_class( $record ) . ' given' );
 		}
 
-		$difference	 =	array_diff_assoc( $this->data, $record->data );
+		$a	 =	$this->data;
+		$b	 =	$record->data;
+
+		// Remove the PKs
+		if( isset( $a[static::PRIMARY_KEY] ) ) {
+			unset( $a[static::PRIMARY_KEY] );
+		}
+
+		if( isset( $b[static::PRIMARY_KEY] ) ) {
+			unset( $b[static::PRIMARY_KEY] );
+		}
+
+		$difference	 =	array_diff_assoc( $a, $b );
 
 		return $difference;
 	}
@@ -233,10 +246,11 @@ abstract class Record implements \ArrayAccess, \Iterator {
 	/**
 	 * Returns the name of the Primary Key
 	 *
+	 * @param	boolean	$prefix		if TRUE, prepend the field prefix
 	 * @return  string
 	 **/
-	public function getPrimaryKey() {
-		return static::PRIMARY_KEY;
+	public function getPrimaryKey( $prefix = FALSE ) {
+		return $prefix ? static::PREFIX . static::PRIMARY_KEY : static::PRIMARY_KEY;
 	}
 
 	/**

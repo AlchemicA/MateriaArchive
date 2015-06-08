@@ -112,9 +112,9 @@ class Finder {
      * @return  $this
      **/
     public function sort( $field, $reverse = FALSE ) {
-        // Prepend prefix to field name
-        if( $this->prefix && ( strpos( $field, $this->prefix ) !== 0 ) ) {
-            $field   =  $this->prefix . $offset;
+        // Remove prefix from field name
+        if( $this->prefix && ( strpos( $field, $this->prefix ) === 0 ) ) {
+            $field   =  substr( $field, strlen( $this->prefix ) );
         }
 
         $this->filters->sorting[$field]  =  $reverse ? TRUE : FALSE;
@@ -129,10 +129,13 @@ class Finder {
      * @param   string  $operator   operator
      * @param   mixed   $value      value
      **/
-    private function setCondition( $field, $operator, $value ) {
-        // To set a condition, the collection should be empty
-        if( !empty( $this->storage ) ) {
-            throw new \Exception( "Error Processing Request" );
+    protected function setCondition( $field, $operator, $value ) {
+        if( !is_scalar( $field ) || is_numeric( $field ) ) {
+            throw new \InvalidArgumentException( 'Argument 1 passed to ' . __METHOD__ . ' must be a string, ' . gettype( $field ) . ' given' );
+        }
+
+        if( !is_scalar( $operator ) ) {
+            throw new \InvalidArgumentException( 'Argument 2 passed to ' . __METHOD__ . ' must be a string, ' . gettype( $operator ) . ' given' );
         }
 
         switch( $operator ) {
@@ -145,23 +148,23 @@ class Finder {
             // Lower or equal
             case '<=':
                 if( !is_numeric( $value ) ) {
-                    throw new \InvalidArgumentException( 'Argument 2 passed to ' . __METHOD__ . ' must be a number, ' . gettype( $value ) . ' given' );
+                    throw new \InvalidArgumentException( 'Argument 3 passed to ' . __METHOD__ . ' must be a number, ' . gettype( $value ) . ' given' );
                 }
 
                 break;
 
             // Equal
             case '=':
-                if( !is_scalar( $value ) && !is_array( $value ) ) {
-                    throw new \InvalidArgumentException( 'Argument 2 passed to ' . __METHOD__ . ' must be scalar or an array, ' . gettype( $value ) . ' given' );
+                if( !is_scalar( $value ) && !is_null( $value ) && !is_array( $value ) ) {
+                    throw new \InvalidArgumentException( 'Argument 3 passed to ' . __METHOD__ . ' must be scalar or an array, ' . gettype( $value ) . ' given' );
                 }
 
                 break;
 
             // Not equal
             case '!=':
-                if( !is_scalar( $value ) && !is_array( $value ) ) {
-                    throw new \InvalidArgumentException( 'Argument 2 passed to ' . __METHOD__ . ' must be scalar or an array, ' . gettype( $value ) . ' given' );
+                if( !is_scalar( $value ) && !is_null( $value ) && !is_array( $value ) ) {
+                    throw new \InvalidArgumentException( 'Argument 3 passed to ' . __METHOD__ . ' must be scalar or an array, ' . gettype( $value ) . ' given' );
                 }
 
                 break;
@@ -169,19 +172,19 @@ class Finder {
             // Range
             case '<>':
                 if( !is_array( $value ) || ( count( $value ) != 2 ) ) {
-                    throw new \InvalidArgumentException( 'Argument 2 passed to ' . __METHOD__ . ' must be an array, ' . gettype( $value ) . ' given' );
+                    throw new \InvalidArgumentException( 'Argument 3 passed to ' . __METHOD__ . ' must be an array, ' . gettype( $value ) . ' given' );
                 }
 
                 break;
 
             default:
-                throw new \InvalidArgumentException( 'Argument 2 passed to ' . __METHOD__ . ' must be a valid operator, ' . ( (string) $value ) . ' given' );
+                throw new \InvalidArgumentException( 'Argument 2 passed to ' . __METHOD__ . ' must be a valid operator, ' . $value . ' given' );
                 break;
         }
 
-        // Prepend prefix to field name
-        if( $this->prefix && ( strpos( $field, $this->prefix ) !== 0 ) ) {
-            $field   =  $this->prefix . $field;
+        // Remove prefix from field name
+        if( $this->prefix && ( strpos( $field, $this->prefix ) === 0 ) ) {
+            $field   =  substr( $field, strlen( $this->prefix ) );
         }
 
         $this->filters->conditions[]     =  [ $field, $operator, $value ];
@@ -209,26 +212,25 @@ class Finder {
     public function getFilters( $prefix = FALSE ) {
         $filters     =  $this->filters;
 
-        if( $this->prefix && !$prefix ) {
+        if( $this->prefix && $prefix ) {
             $prefix  =  $this->prefix;
-            $length  =  strlen( $prefix );
 
-            // Remove prefix from
+            // Prepend prefix
             $filters->conditions     =  array_map(
-                function( $v ) use ( $prefix, $length ) {
-                    if( is_array( $v ) && substr( $v[0], 0, $length ) == $prefix )
-                        $v[0]    =  substr( $v[0], $length );
+                function( $v ) use ( $prefix ) {
+                    if( is_array( $v ) && ( strpos( $v[0], $prefix ) !== 0 ) ) {
+                        $v[0]    =  $prefix . $v[0];
+                    }
 
                     return $v;
                 },
                 $filters->conditions
             );
 
-            // Remove prefix from sorting
             $filters->sorting        =  array_combine(
-                array_map( function( $k ) use ( $prefix, $length ) {
-                        if( substr( $k, 0, $length ) == $prefix )
-                            $k   =  substr( $k, $length );
+                array_map( function( $k ) use ( $prefix ) {
+                        if( strpos( $k, $prefix ) !== 0 )
+                            $k   =  $prefix . $k;
 
                         return $k;
                     },
@@ -239,7 +241,7 @@ class Finder {
 
         }
 
-        return $this->filters;
+        return $filters;
     }
 
     /**
@@ -268,8 +270,8 @@ class Finder {
     /**
      * @see Record::getPrimaryKey()
      **/
-    public function getPrimaryKey() {
-        return $this->pk;
+    public function getPrimaryKey( $prefix = FALSE ) {
+        return $prefix ? $this->prefix . $this->pk : $this->pk;
     }
 
 }

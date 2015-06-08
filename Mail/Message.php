@@ -196,7 +196,7 @@ class Message implements \ArrayAccess {
 	 * @return  $this
 	 **/
 	public function setSubject( $subject ) {
-		$this->subject	 =	$this->encodeUtf8( $this->filterOther( $subject ) );
+		$this->subject	 =	$this->encodeUFT8( $this->filterOther( $subject ) );
 
 		return $this;
 	}
@@ -312,7 +312,7 @@ class Message implements \ArrayAccess {
 			return $email;
 		}
 
-		$name	 =	$this->encodeUtf8( $this->filterName( $name ) );
+		$name	 =	$this->encodeUFT8( $this->filterName( $name ) );
 
 		return sprintf( '%s <%s>', $name, $email );
 	}
@@ -349,14 +349,14 @@ class Message implements \ArrayAccess {
 	 * @param	string	$value	the value to encode
 	 * @return	string
 	 **/
-	public function encodeUtf8( $value ) {
+	public function encodeUFT8( $value ) {
 		$value   =  trim( $value );
 
 		if( preg_match( '/(\s)/', $value ) ) {
-			return $this->encodeUtf8Words( $value );
+			return $this->encodeUFT8Words( $value );
 		}
 
-		return $this->encodeUtf8Word( $value );
+		return $this->encodeUFT8Word( $value );
 	}
 
 	/**
@@ -365,7 +365,7 @@ class Message implements \ArrayAccess {
 	 * @param	string	$value	the word to encode
 	 * @return	string
 	 **/
-	protected function encodeUtf8Word( $value ) {
+	protected function encodeUFT8Word( $value ) {
 		return sprintf( '=?UTF-8?B?%s?=', base64_encode( $value ) );
 	}
 
@@ -375,15 +375,15 @@ class Message implements \ArrayAccess {
 	 * @param	string	$value	the words to encode
 	 * @return	string
 	 **/
-	protected function encodeUtf8Words( $value ) {
+	protected function encodeUFT8Words( $value ) {
 		$words		 =	preg_split( '/[\s]+/', $value, -1, PREG_SPLIT_NO_EMPTY ); // explode( ' ', $value );
 		$encoded	 =	[];
 
 		foreach( $words as $word ) {
-			$encoded[]	 =	$this->encodeUtf8Word( $word );
+			$encoded[]	 =	$this->encodeUFT8Word( $word );
 		}
 
-		return join( $this->encodeUtf8Word( ' ' ), $encoded );
+		return join( $this->encodeUFT8Word( ' ' ), $encoded );
 	}
 
 	/**
@@ -401,7 +401,7 @@ class Message implements \ArrayAccess {
 			','		=>  '',
 			'<'		=>  '',
 			'>'		=>  '',
-		);
+		];
 
 		$email	 =	strtr( $email, $rule );
 
@@ -415,7 +415,7 @@ class Message implements \ArrayAccess {
 	 * @return	string
 	 **/
 	public function filterName( $name ) {
-		$rule	 =	array(
+		$rule	 =	[
 			"\r"	=>	'',
 			"\n"	=>	'',
 			"\t"	=>	'',
@@ -533,7 +533,7 @@ class Message implements \ArrayAccess {
 		}
 
 		foreach( $this->headers as $key => $value ) {
-			if( !in_array( $key, array( 'MIME-Version', 'Date', 'Message-ID' ) ) )
+			if( !in_array( $key, [ 'MIME-Version', 'Date', 'Message-ID' ] ) )
            		$message	.=	$key . ': ' . $value . $this->eol;
         }
 
@@ -542,11 +542,41 @@ class Message implements \ArrayAccess {
 		$message	.=	'Subject: ' . $this->subject . $this->eol;
 
 		if( $this->hasAttachments() ) {
-			$message	.=	$this->createBodyWithAttachments( $this->boundaries[0], $this->boundaries[1] );
+			$message	.=	$this->buildBodyWithAttachments( $this->boundaries[0], $this->boundaries[1] );
 		}
 		else {
-			$message	.=	$this->createBody( $this->boundaries[0] );
+			$message	.=	$this->buildBody( $this->boundaries[0] );
 		}
+
+		return $message;
+	}
+
+	public function buildHeaders() {
+		$message	 =	NULL;
+		$message	.=	'MIME-Version: 1.0' . $this->eol;
+		$message	.=	'Date: ' . date( 'r' ) . $this->eol;
+		$message	.=	'Message-ID: <' . md5( 'TX' . md5( time() ) . uniqid() ) . '@' . current( explode( '@', key( $this->from ) ) ) . '>' . $this->eol;
+
+		if( !isset( $this->headers['Return-Path'] ) ) {
+			$message	.=	'Return-Path: ' . $this->formatMailHeader( key( $this->from ), current( $this->from ) ) . $this->eol;
+		}
+
+		if( !isset( $this->headers['X-Priority'] ) ) {
+			$message	.=	'X-Priority: 3' . $this->eol;
+		}
+
+		if( !isset( $this->headers['X-Mailer'] ) ) {
+			$message	.=	'X-Mailer: Materia (https://github.com/AlchemicA/Materia)' . $this->eol;
+		}
+
+		foreach( $this->headers as $key => $value ) {
+			if( !in_array( $key, [ 'MIME-Version', 'Date', 'Message-ID' ] ) )
+           		$message	.=	$key . ': ' . $value . $this->eol;
+        }
+
+		$message	.=	'From: ' . $this->formatMailHeader( key( $this->from ), current( $this->from ) ) . $this->eol;
+		$message	.=	'To: '. join( ', ', $this->to ) . $this->eol;
+		$message	.=	'Subject: ' . $this->subject . $this->eol;
 
 		return $message;
 	}
@@ -557,7 +587,7 @@ class Message implements \ArrayAccess {
 	 * @param	string	$boundary		boundary
 	 * @return	string
 	 **/
-	protected function createBody( $boundary ) {
+	protected function buildBody( $boundary ) {
 		$body	 =  NULL;
 		$body	.=  "Content-Type: multipart/alternative; boundary=\"{$boundary}\"" . $this->eol;
 		$body	.=  $this->eol;
@@ -585,7 +615,7 @@ class Message implements \ArrayAccess {
 	 * @param	string	$alternative	alternative boundary
 	 * @return	string
 	 **/
-	protected function createBodyWithAttachments( $boundary, $alternative ) {
+	protected function buildBodyWithAttachments( $boundary, $alternative ) {
 		$body	 =	NULL;
 		$body	.=	"Content-Type: multipart/related; boundary=\"{$boundary}\"" . $this->eol;
 		$body	.=	$this->eol;
@@ -632,7 +662,7 @@ class Message implements \ArrayAccess {
 	 * @return	string
 	 **/
 	protected function formatPlainText( $message ) {
-		$message	 =	str_replace( array( "\r", "\n", "\t" ), '', $message );
+		$message	 =	str_replace( [ "\r", "\n", "\t" ], '', $message );
 		$message	 =	str_ireplace( $message, '</p>', '</p>' . $this->eol . $this->eol );
 		$message	 =	preg_replace( '/\<br(\s*)?\/?\>/i', $this->eol, $message );
 

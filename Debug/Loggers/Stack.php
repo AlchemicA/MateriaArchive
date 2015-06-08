@@ -21,8 +21,9 @@ class Stack implements \IteratorAggregate, \Materia\Debug\Logger {
      * @return  $this
      **/
     public final function addLogger( \Materia\Debug\Logger $logger ) {
-        if( !in_array( $logger, $this->loggers ) )
+        if( !in_array( $logger, $this->loggers ) ) {
             $this->loggers[]     =  $logger;
+        }
 
         return $this;
     }
@@ -34,8 +35,9 @@ class Stack implements \IteratorAggregate, \Materia\Debug\Logger {
      * @return  $this
      **/
     public final function removeLogger( \Materia\Debug\Logger $logger ) {
-        if( $key = array_search( $logger, $this->loggers ) )
+        if( $key = array_search( $logger, $this->loggers ) ) {
             unset( $this->loggers[$key];
+        }
 
         return $this;
     }
@@ -43,7 +45,7 @@ class Stack implements \IteratorAggregate, \Materia\Debug\Logger {
     /**
      * @see \Materia\Debug\Logger::logMessage()
      **/
-    public function logMessage( $level, $message = NULL ) {
+    public function logMessage( $type, $severity = self::SEVERITY_INFO, $message = NULL ) {
         foreach( $this->loggers as $logger ) {
             call_user_func_array( [ $logger, 'logMessage' ], func_get_args() );
         }

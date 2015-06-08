@@ -72,7 +72,7 @@ class Container implements \ArrayAccess {
 	 **/
 	public function offsetGet( $offset ) {
 		if( isset( $this->storage[$offset] ) ) {
-			if( is_object( $this->storage[$offset] ) && ( $this->storage[$offset] instanceof \Closure ) ) {
+			if( $this->storage[$offset] instanceof \Closure ) {
 				$this->storage[$offset]	 =	$this->storage[$offset]();
 			}
 

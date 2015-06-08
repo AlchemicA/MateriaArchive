@@ -12,12 +12,14 @@ namespace Materia\Data\Storages\SQL;
 
 class MySQL implements \Materia\Data\Storage {
 
-    private $dsn;
-    private $username;
-    private $password;
-    private $prefix;
+    protected $dsn;
+    protected $username;
+    protected $password;
+    protected $prefix;
 
-    private $connection  =  FALSE;
+    protected $connection    =  FALSE;
+    protected $error         =  FALSE;
+    protected $latest        =  0;
 
     /**
      * Constructor
@@ -40,6 +42,8 @@ class MySQL implements \Materia\Data\Storage {
      * @see \Materia\Data\Storage::connect()
      **/
     public function connect() {
+        $this->error     =  FALSE;
+
         try {
             $this->connection    =  new \PDO( $this->dsn, $this->username, $this->password );
 
@@ -47,13 +51,20 @@ class MySQL implements \Materia\Data\Storage {
                 $this->connection->setAttribute( \PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION );
                 $this->connection->setAttribute( \PDO::ATTR_AUTOCOMMIT, FALSE );
                 // $this->connection->setAttribute( PDO::ATTR_STATEMENT_CLASS, array( 'Materia\\Data\\Collections\\Statement', array( $this->connection ) ) );
+
+                // Set encoding
+                $this->connection->setAttribute( \PDO::MYSQL_ATTR_INIT_COMMAND, 'SET NAMES utf8' );
+                $this->connection->exec( 'SET NAMES utf8' );
             }
         }
         catch( \PDOException $exception ) {
             $this->connection    =  FALSE;
+            $this->error         =  $exception->getCode();
 
-            throw new \Exception( $exception->getMessage() , (int) $exception->getCode() );
+            return FALSE;
         }
+
+        return TRUE;
     }
 
     /**
@@ -77,7 +88,8 @@ class MySQL implements \Materia\Data\Storage {
 
         // Fields' list
         if( !empty( $fields ) ) {
-            $fields  =  implode( ', ', $fields );
+            $prefix  =  $finder->getFieldPrefix();
+            $fields  =  $prefix . implode( ", {$prefix}", $fields );
         }
         // If no specific field(s), get everything
         else {
@@ -97,7 +109,7 @@ class MySQL implements \Materia\Data\Storage {
                                         function( $k ) {
                                             return ':in' . $k;
                                         },
-                                        range( 0, count( $values ) )
+                                        range( 1, count( $values ) )
                                     );
                     $data        =  array_merge( $data, array_combine( $keys, $values ) );
                     $where[]     =  "{$field} IN (" . implode( ', ', $keys ) . ")";
@@ -138,16 +150,24 @@ class MySQL implements \Materia\Data\Storage {
 
         // Limit
         if( !empty( $filters->paging ) ) {
-            $limit   =  ' LIMIT ' . implode( ', ', $filters->paging );
+            $limit   =  " LIMIT {$filters->paging[0]} OFFSET {$filters->paging[1]}";
         }
 
         // Build and execute the query
         $query   =  trim( sprintf( 'SELECT %s FROM %s%s%s%s', $fields, $table, $where, $order, $limit ) ) . ';';
 
         if( $result = $this->query( $query, $data, $record ) ) {
-            $result->closeCursor();
+            // Limit count to 1, returns the Record
+            if( reset( $filters->paging ) === 1 ) {
+                $record  =  $result->fetch();
 
-            return new Collection( $result );
+                $result->closeCursor();
+
+                return $record;
+            }
+            else {
+                return new Collection( $result );
+            }
         }
 
         return FALSE;
@@ -158,19 +178,36 @@ class MySQL implements \Materia\Data\Storage {
      **/
     public function load( \Materia\Data\Record &$record, $relationships = FALSE ) {
         $table   =  $this->prefix . $record->getRecordName();
-        $pk      =  $record->getPrimaryKey();
+        $pk      =  $record->getPrimaryKey( TRUE );
 
-        if( !$record->isUpdated() ) {
-            // Build and execute the query
-            $query   =  trim( sprintf( 'SELECT * FROM %s WHERE %s = %s LIMIT 1', $table, $pk, ":{$pk}" ) ) . ';';
+        // Build and execute the query
+        $query   =  trim( sprintf( 'SELECT * FROM %s WHERE %s = %s LIMIT 1', $table, $pk, ":{$pk}" ) ) . ';';
 
-            if( $result = $this->query( $query, array( ":{$pk}" => $record->$pk ), get_class( $record ) ) ) {
-                $record  =  $result->fetch( \PDO::FETCH_CLASS );
+        if( $result = $this->query( $query, [ ":{$pk}" => $record->{$pk} ], get_class( $record ) ) ) {
+            $record  =  $result->fetch();
 
-                $result->closeCursor();
+            $result->closeCursor();
 
-                return TRUE;
+            // Resolve relationships
+            if( $relationships ) {
+                $fields      =  $record->getInfo();
+
+                foreach( $fields as $field => $config ) {
+                    if( isset( $config['relation'] ) && is_subclass_of( $config['relation'], '\Materia\Data\Record' ) && $record->{$field} ) {
+                        $relation    =  new $config['relation']();
+                        $pk          =  $relation->getPrimaryKey();
+
+                        $relation->{$pk}     =  $record->{$field};
+
+                        // Try to load the relationship
+                        if( $this->load( $relation ) ) {
+                            $record->{$field}    =  $relation;
+                        }
+                    }
+                }
             }
+
+            return TRUE;
         }
 
         return FALSE;
@@ -182,8 +219,8 @@ class MySQL implements \Materia\Data\Storage {
     public function save( \Materia\Data\Record &$record ) {
         $data    =  [];
         $values  =  [];
-        $table   =  $record->getRecordName();
-        $pk      =  $record->getPrimaryKey();
+        $table   =  $this->prefix . $record->getRecordName();
+        $pk      =  $record->getPrimaryKey( TRUE );
 
         // Update
         if( $record->isUpdated() ) {
@@ -191,7 +228,7 @@ class MySQL implements \Materia\Data\Storage {
                 $key         =  ":{$field}";
                 $data[$key]  =  $value;
 
-                if( $field == $pk ) {
+                if( $field != $pk ) {
                     $values[]    =  "{$field} = {$key}";
                 }
                 else {
@@ -220,9 +257,10 @@ class MySQL implements \Materia\Data\Storage {
             $query   =  trim( sprintf( 'INSERT INTO %s SET %s', $table, implode( ', ', $values ) ) ) . ';';
 
             if( $result = $this->query( $query, $data, get_class( $record ) ) ) {
-                $result->closeCursor();
                 // Populate PK
-                $record->$pk     =  $this->connection->lastInsertId();
+                $record->{$pk}   =  $this->latest;
+
+                $result->closeCursor();
 
                 return TRUE;
             }
@@ -242,9 +280,9 @@ class MySQL implements \Materia\Data\Storage {
             // Built and execute the query
             $query   =  trim( sprintf( 'DELETE FROM %s WHERE {$pk} = :{$pk}', $table ) ) . ';';
 
-            if( $result = $this->query( $query, array( ":{pk}" => $record->$pk ), get_class( $record ) ) ) {
+            if( $result = $this->query( $query, [ ":{$pk}" => $record->$pk ], get_class( $record ) ) ) {
                 // Remove PK
-                unset( $record->$pk );
+                unset( $record->{$pk} );
 
                 $result->closeCursor();
 
@@ -253,6 +291,13 @@ class MySQL implements \Materia\Data\Storage {
         }
 
         return FALSE;
+    }
+
+    /**
+     * @see \Materia\Data\Storage::getError()
+     **/
+    public function getError() {
+        return $this->error;
     }
 
     /**
@@ -267,18 +312,30 @@ class MySQL implements \Materia\Data\Storage {
         $this->connection->beginTransaction();
 
         try {
-            $stmt    =  $this->connection->prepare( $query, array( \PDO::ATTR_CURSOR => \PDO::CURSOR_SCROLL ) );
+            $stmt    =  $this->connection->prepare( $query, [ \PDO::ATTR_CURSOR => \PDO::CURSOR_SCROLL ] );
 
+            // Set the fetch mode
             $stmt->setFetchMode( \PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, $record );
 
+            // Execute query
             $stmt->execute( $data );
+
+            // Store the latest inserted ID
+            $this->latest    =  $this->connection->lastInsertId();
 
             $this->connection->commit();
         }
         catch( \PDOException $exception ) {
             $this->connection->rollBack();
 
-            throw new \Exception( $exception->getMessage() , (int) $exception->getCode() );
+            $this->error     =  $exception->getCode();
+
+            echo $query;
+            print_r( $data );
+            print_r( $exception->getTrace() );
+            die( $exception->getMessage() );
+
+            return FALSE;
         }
 
         return $stmt;

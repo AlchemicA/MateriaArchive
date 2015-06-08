@@ -14,6 +14,8 @@ interface Storage {
 
     /**
      * Establish a connection to storage engine
+     *
+     * @return  boolean
      **/
     public function connect();
 
@@ -49,6 +51,13 @@ interface Storage {
      * @return  integer                     number or records
      **/
     public function find( Finder &$finder );
+
+    /**
+     * Get latest error code
+     *
+     * @return  integer         error code
+     **/
+    public function getError();
 
     /**
      * Setup a logger

@@ -10,7 +10,7 @@ namespace Materia\Data;
  * @link    http://lab.alchemica.it/materia/
  **/
 
-interface Collection extends \Iterator {
+interface Collection extends \Iterator, \Countable {
 
     /**
      * Returns collection's type
@@ -18,13 +18,6 @@ interface Collection extends \Iterator {
      * @return  string      class name or NULL if not defined (empty collection)
      **/
     public function getType();
-
-    /**
-     * Returns number of items
-     *
-     * @return  integer
-     **/
-    public function count();
 
     /**
      * Reverse the order of the elements

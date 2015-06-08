@@ -12,9 +12,11 @@ namespace Materia\Data\Storages\SQL;
 
 class Collection implements \Materia\Data\Collection {
 
-    private $reverse     =  FALSE;
-    private $count       =  0;
-    private $current;
+    protected $reverse   =  FALSE;
+    protected $count     =  0;
+
+    protected $current;
+    protected $type;
 
     /**
      * Constructor
@@ -24,18 +26,15 @@ class Collection implements \Materia\Data\Collection {
     public function __construct( \PDOStatement $records, $count = 0 ) {
         $this->type      =  NULL;
         $this->storage   =  $records;
+    }
 
-        $this->rewind();
-
-        // Populate type
-        if( $this->current ) {
-            if( !( $this->current instanceof \Materia\Data\Record ) ) {
-                throw new \RuntimeException( 'Elements of collection must be instances of \Materia\Data\Record, instances of ' . get_class( $this->current ) . ' given' );
-            }
-
-            $this->type  =  get_class( $this->current );
+    /**
+     * Destructor
+     **/
+    public function __destruct() {
+        if( $this->storage instanceof \PDOStatement ) {
+            $this->storage->closeCursor();
         }
-
     }
 
     /**
@@ -67,7 +66,7 @@ class Collection implements \Materia\Data\Collection {
      * @see Iterator::key()
      **/
     public function key() {
-        if( $this->current ) {
+        if( isset( $this->type ) && $this->current ) {
              // Cache the PK name
             if( !isset( $key ) ) {
                 static $key;
@@ -87,13 +86,25 @@ class Collection implements \Materia\Data\Collection {
      * @see Iterator::next()
      **/
     public function next() {
-        if( $this->current ) {
+        if( isset( $this->current ) ) {
             if( $this->reverse ) {
                 $this->current   =  $this->storage->fetch( \PDO::FETCH_CLASS, \PDO::FETCH_ORI_PRIOR );
             }
             else {
                 $this->current   =  $this->storage->fetch( \PDO::FETCH_CLASS, \PDO::FETCH_ORI_NEXT );
             }
+        }
+        else {
+            $this->rewind();
+        }
+
+        // Populate type
+        if( !isset( $this->type ) && $this->current ) {
+            if( !( $this->current instanceof \Materia\Data\Record ) ) {
+                throw new \RuntimeException( sprintf( 'Elements of collection must be instances of \Materia\Data\Record, instances of %s given', get_class( $this->current ) ) );
+            }
+
+            $this->type  =  get_class( $this->current );
         }
     }
 
